@@ -12,7 +12,7 @@ import emailHandler
 import bcrypt
 
 app = Flask(__name__)
-app.secret_key = '9eohdfsvkao[wpiewghdnsvkd;oepgwethjiodfs' # ???
+app.secret_key = open("secret_key.txt", "r").read()
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -180,4 +180,5 @@ def verify_email_code():
 
 
 if __name__ == '__main__':
-    app.run(host="10.65.56.85", debug=False)
+    context = 'adhoc'
+    app.run(host="localhost", debug=True, ssl_context=context)
