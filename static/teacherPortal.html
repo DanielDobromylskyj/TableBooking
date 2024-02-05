@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <style>
+        .headerTitle {
+                text-align: center;
+                font-size: 40px;
+                color: white;
+        }
+
+        .header {
+            background-color: purple;
+            padding: 10px;
+        }
+
+        .box {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            width: 60%;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        .logoutBox {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            width: 10%;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        body {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            background-image: url("https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039");
+            background-size: cover;
+            background-attachment: fixed;
+            padding-top: 10%;
+            padding-bottom: 10%;
+        }
+    </style>
+
+    <script>
+        function updatePeriodOverview() {
+            var date = document.getElementById("date").value;
+            var period = document.getElementById("period").value;
+
+            fetch("/getPeriodOverview", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    date: date,
+                    period: period
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayPeriodOverview(data);
+            })
+            .catch(error => console.log('Error:', error));
+        }
+
+        function displayPeriodOverview(periodOverview) {
+            var bookingsDiv = document.querySelector('.bookings');
+            bookingsDiv.innerHTML = ""; // Clear previous content
+
+            for (var tableID in periodOverview) {
+                var tableInfo = periodOverview[tableID];
+                var tableDiv = document.createElement('div');
+                tableDiv.className = 'table-info';
+
+                if (tableInfo.booked === "True") {
+
+                    var tableHeading = document.createElement('h3');
+                    tableHeading.textContent = 'Table ' + tableID;
+                    tableDiv.appendChild(tableHeading);
+
+                    var bookedTimePara = document.createElement('p');
+                    bookedTimePara.textContent = 'Booked Time: ' + tableInfo.timeBooked;
+                    tableDiv.appendChild(bookedTimePara);
+
+                    var studentsPara = document.createElement('p');
+                    studentsPara.textContent = 'Students: ' + tableInfo.students.join(', ');
+                    tableDiv.appendChild(studentsPara);
+
+                    var bookedByPara = document.createElement('p');
+                    bookedByPara.textContent = 'Booked By: ' + tableInfo.bookedBy;
+                    tableDiv.appendChild(bookedByPara);
+
+                    var taskInfo = document.createElement('p');
+                    taskInfo.textContent = 'Task: ' + tableInfo.task;
+                    tableDiv.appendChild(taskInfo);
+
+                    var teacherName = document.createElement('p');
+                    teacherName.textContent = 'Teacher: ' + tableInfo.teacher;
+                    tableDiv.appendChild(teacherName);
+
+                    bookingsDiv.appendChild(tableDiv);
+                }
+            }
+        }
+    </script>
+    <style>
+        .table-info {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center; /* Center the form content */
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            width: 60%;
+            margin: 0 auto;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 class="headerTitle">UTCN Library Overview</h2>
+    </div>
+    <div class="box">
+        <label for="date">Date:</label>
+        <input type="date" id="date" required>
+        <label for="period">Period:</label>
+        <input type="number" id="period" min="1" max="10" required>
+        <button onclick="updatePeriodOverview()">Update</button>
+    </div>
+    <div class="bookings"></div>
+    <br>
+    <div class="logoutBox">
+        <a href="/logout">Logout</a>
+    </div>
+</body>
+</html>

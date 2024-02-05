@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <style>
+        .headerTitle {
+            text-align: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        .header {
+            background-color: purple;
+            padding: 10px;
+        }
+
+        .selectors {
+            margin: 0 auto;
+            width: 60%;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .button {
+            width: 30%;
+            margin: 10px;
+            border: 2px solid green;
+            background: #ffe;
+            border-radius: 5px;
+            display: inline-block;
+        }
+        a {
+            display: block;
+            width: 100%;
+            line-height: 2em;
+            text-align: center;
+            font-size: 16px;
+            color: black;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a:hover {
+            color: red;
+            background: #eff;
+        }
+
+        body {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            background-image: url("https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039");
+            background-size: cover;
+            background-attachment: fixed;
+            padding-top: 10%;
+            padding-bottom: 10%;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 class="headerTitle">UTCN Library Table Booker</h2>
+    </div>
+    <div class="selectors">
+        <div class="button"><a href="/mybookings">View My Bookings</a></div>
+        <div class="button"><a href="/book">Create A Booking</a></div>
+        <div class="button"><a href="/logout">Log Out</a></div>
+    </div>
+</body>
+</html>

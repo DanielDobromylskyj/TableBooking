@@ -1,0 +1,253 @@
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Booking</title>
+    <style>
+            .headerTitle {
+                text-align: center;
+                font-size: 40px;
+                color: white;
+            }
+
+            .header {
+                background-color: purple;
+                padding: 10px;
+            }
+
+            .box {
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 20px;
+                border-radius: 10px;
+                text-align: center;
+                width: 60%;
+                margin: 0 auto;
+                margin-top: 20px;
+            }
+
+            .selectors {
+                margin-top: 20px;
+                text-align: center;
+            }
+
+            .button {
+                width: 30%;
+                margin: 10px;
+                border: 2px solid green;
+                background: #ffe;
+                border-radius: 5px;
+                display: inline-block;
+            }
+
+            a {
+                display: block;
+                width: 100%;
+                line-height: 2em;
+                text-align: center;
+                font-size: 16px;
+                color: black;
+                text-decoration: none;
+                border-radius: 5px;
+            }
+
+            a:hover {
+                color: red;
+                background: #eff;
+            }
+
+            body {
+                margin: 0px;
+                padding: 0px;
+                border: 0px;
+                background-image: url("https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039");
+                background-size: cover;
+                background-attachment: fixed;
+                padding-top: 10%;
+                padding-bottom: 10%;
+            }
+
+            .table {
+                margin: 5px;
+                padding: 10px;
+                border: 1px solid #ccc;
+                cursor: not-allowed;
+            }
+
+            .booking-form {
+                margin-top: 10px;
+                text-align: center; /* Center the form content */
+            }
+
+            .booking-form input {
+                display: block;
+                margin: 0 auto; /* Center the input boxes horizontally */
+                margin-bottom: 5px;
+            }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2 class="headerTitle">Table Booking</h2>
+    </div>
+    <div class="box">
+        <label for="date">Date:</label>
+        <input type="date" id="date" required>
+        <label for="period">Period:</label>
+        <input type="number" id="period" min="1" max="7" required>
+        <button class="button" onclick="getTableInfo()">Check Availability</button>
+        <div id="table-container"></div>
+    </div>
+
+    <script>
+        let activeBookingForm = null;
+
+        function getTableInfo() {
+            var date = document.getElementById("date").value;
+            var period = document.getElementById("period").value;
+
+            fetch("/getTableInfo?date=" + date + "&period=" + period)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.toString());
+                    if (data.toString() !== "{}") {
+                        displayTables(data);
+                    } else {
+                        alert("Invalid Date");
+                    }
+                })
+                .catch(error => console.log("Error!"));
+        }
+
+        function displayTables(tableData) {
+            var tableContainer = document.getElementById("table-container");
+            tableContainer.innerHTML = ""; // Clear previous content
+
+            // Loop through the table data and display tables
+            for (var table in tableData) {
+                var tableElement = document.createElement("div");
+                tableElement.innerHTML = "Table " + table + ": " + ((tableData[table] === "True") ? "Booked" : "Available");
+                tableElement.className = "table";
+                if (tableData[table] === "False") {
+                    tableElement.onclick = function() {
+                        toggleBookingForm(this.dataset.table);
+                    };
+                    tableElement.dataset.table = table; // Store table number as data attribute
+                    tableElement.style.cursor = "pointer";
+                }
+                tableContainer.appendChild(tableElement);
+            }
+        }
+
+        function toggleBookingForm(tableNumber) {
+            if (activeBookingForm !== null && activeBookingForm.dataset.table !== tableNumber) {
+                activeBookingForm.parentNode.removeChild(activeBookingForm);
+                activeBookingForm = null;
+            }
+
+            if (activeBookingForm === null) {
+                var bookingForm = document.createElement("div");
+                bookingForm.className = "booking-form";
+
+                for (var i = 1; i <= 3; i++) {
+                    var input = document.createElement("input");
+                    input.type = "text";
+                    input.placeholder = "Student " + i + " Email";
+                    input.className = "studentEmail";
+                    input.onclick = function(event) {
+                        event.stopPropagation(); // Prevent click event from bubbling up
+                    };
+                    bookingForm.appendChild(input);
+                }
+
+                // Work Info
+                var input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "Group Task";
+                input.className = "TaskName";
+                input.onclick = function(event) {
+                    event.stopPropagation(); // Prevent click event from bubbling up
+                };
+                bookingForm.appendChild(input);
+
+                var input = document.createElement("input");
+                input.type = "text";
+                input.placeholder = "Teacher";
+                input.className = "TeacherName";
+                input.onclick = function(event) {
+                    event.stopPropagation();
+                };
+                bookingForm.appendChild(input);
+
+                var bookButton = document.createElement("button");
+                bookButton.textContent = "Book";
+                
+                bookButton.onclick = function(event) {
+                    bookTable(tableNumber, bookingForm);
+                    event.stopPropagation()
+                };
+
+                bookingForm.appendChild(bookButton);
+
+                var tableDiv = document.querySelector('[data-table="' + tableNumber + '"]');
+                tableDiv.appendChild(bookingForm);
+
+                activeBookingForm = bookingForm;
+            }
+        }
+
+        function bookTable(tableNumber, bookingForm) {
+            var studentEmails = [];
+            var inputs = bookingForm.getElementsByClassName("studentEmail");
+            for (let i = 0; i < inputs.length; i++) {
+                input = inputs[i];
+                if (input.value.trim() !== "") {
+                    studentEmails.push(input.value.trim());
+                }
+            };
+
+            if (studentEmails.length === 0) {
+                alert("Please enter at least one student email.");
+                return;
+            }
+
+            var taskInfo = bookingForm.getElementsByClassName("TaskName")[0].value;
+            var teacherName = bookingForm.getElementsByClassName("TeacherName")[0].value;
+
+            if (taskInfo === "") {
+                alert("Please enter the task you are doing");
+                return;
+            }
+
+            if (teacherName === "") {
+                alert("Please enter the name of the teacher who set your work");
+                return;
+            }
+
+            fetch("/CreateBooking", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    date: document.getElementById("date").value,
+                    period: document.getElementById("period").value,
+                    table: tableNumber,
+                    students: studentEmails,
+                    taskName: taskInfo,
+                    teacher: teacherName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => console.log('Error:', error));
+
+            // Remove the booking form after booking
+            bookingForm.parentNode.removeChild(bookingForm);
+            activeBookingForm = null;
+        }
+    </script>
+</body>
+</html>

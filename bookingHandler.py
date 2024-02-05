@@ -1,0 +1,197 @@
+import os, time
+import datetime
+
+class Manager:
+    def __init__(self):
+        self.numberOfTables = 10
+
+        self.currentLoadedDate = ""
+        self.loadedBookings = None
+        self.allStudentsBooked = []
+
+    def loadBooking(self, date):
+        tomorrowsDate = (datetime.datetime.now().date() + datetime.timedelta(days=1))
+        if os.path.exists(f"bookings/{tomorrowsDate.strftime('%Y-%m-%d')}.booking") == False:
+            if (tomorrowsDate.weekday() != 5) and (tomorrowsDate.weekday() != 6): # not Sat/Sun
+                self.createEmptyBookings(tomorrowsDate.strftime('%Y-%m-%d'))
+
+
+        if date == self.currentLoadedDate:
+            return
+        else:
+            self.save()
+
+        path = f"bookings/{date}.booking"
+        if os.path.exists(path):
+            self.currentLoadedDate = date
+            with open(path, "r") as f:
+                fileData = f.read().split("\n")
+
+            table = None
+            self.loadedBookings = {
+                str(i+1): {} for i in range(7)
+            }
+
+            for chunk in fileData:
+                if chunk == "":
+                    continue
+                op, data = chunk.split(",")
+
+                if op == "META":
+                    period, table = data.split("|")
+                    self.loadedBookings[period][table] = {
+                        "students": [],
+                        "booked": False,
+                        "bookedBy": " ",
+                        "timeBooked": " ",
+                        "task": " ",
+                        "teacher": " ",
+                    }
+
+                elif op == "STUDENT":
+                    self.loadedBookings[period][table]["students"].append(data)
+                    self.allStudentsBooked.append(data)
+
+                else:
+                    self.loadedBookings[period][table][op] = data
+
+        else:
+            raise FileNotFoundError
+
+    def studentAlreadyBooked(self, student, period):
+        for table in self.loadedBookings[period]:
+            if student in self.loadedBookings[period][table]["students"]:
+                return True
+        return False
+
+    def createEmptyBookings(self, date):
+        weekday = datetime.datetime.strptime(date, '%Y-%m-%d').weekday()
+
+        periods = 7
+        if (weekday == 0) or (weekday == 4): # Monday / Friday
+            periods = 6
+
+        saveData = ""
+
+        for periodID in range(periods):
+            for tableID in range(self.numberOfTables):
+                saveData += (f"META,{periodID+1}|{tableID+1}\n"
+                             f"booked,False\n"
+                             f"bookedBy, \n"
+                             f"timeBooked,\n"
+                             f"task,\n"
+                             f"teacher,\n")
+
+        with open(f"bookings/{date}.booking", "w") as f:
+            f.write(saveData)
+
+
+
+    def tableFree(self, period, table):
+        return self.loadedBookings[period][table]["booked"]
+
+    def bookTable(self, period, table, by, students, task, teacher):
+        self.loadedBookings[period][table] = {
+                "students": students,
+                "booked": "True",
+                "bookedBy": by,
+                "timeBooked": time.strftime("%H:%M %d/%m/%Y"),
+                "task": task,
+                "teacher": teacher
+        }
+        self.save()
+
+
+    def createBooking(self, date: str, period: str, table, by, otherStudents, task, teacher):
+        try:
+            self.loadBooking(date)
+        except:
+            return f"No Bookings Available For {date}", 422
+
+        # userData < today-1
+        if datetime.datetime.strptime(date, '%Y-%m-%d').date() <= (
+                    datetime.datetime.now().date() - datetime.timedelta(days=1)):
+            return "Please select a current or future date"
+
+        if period.isdigit() == False:
+            return "Please select a valid period"
+
+        if (int(period) < 1) or (int(period) > 7):
+            return "Please select a valid period"
+
+        if self.studentAlreadyBooked(by, period):
+            return f"{by} already has a table booked"
+
+        if len(self.getBookingsFor(by, date)) >= 2:
+            return "You already have 2 tables booked today"
+
+        if self.tableFree(period, table):
+            otherStudents.append(by)
+            self.bookTable(period, table, by, otherStudents, task, teacher)
+            return "You have now booked a table"
+
+        return "This Table Is Already Taken"
+
+
+    def getPeriodData(self, date, period):
+        if datetime.datetime.strptime(date, '%Y-%m-%d').date() <= (
+                    datetime.datetime.now().date() - datetime.timedelta(days=1)):
+            return {}, 422
+
+        try:
+            self.loadBooking(date)
+        except:
+            return {}, 422
+
+        if (int(period) < 1) or (int(period) > 7):
+            return {}, 422
+
+        return {
+            str(i+1): self.loadedBookings[period][str(i+1)]["booked"] for i in range(self.numberOfTables)
+        }
+
+
+    def getTeacherPeriodData(self, date, period):
+        try:
+            self.loadBooking(date)
+        except:
+            return {}, 422
+        return self.loadedBookings[period]
+
+
+    def getBookingsFor(self, student, date):
+        try:
+            self.loadBooking(date)
+        except:
+            return {}, 422
+
+        found = []
+        for periodID in self.loadedBookings:
+            for tableID in self.loadedBookings[periodID]:
+                if student in self.loadedBookings[periodID][tableID]["students"]:
+                    found.append([periodID, tableID])
+
+        return found
+
+
+    def save(self):
+        saveData = ""
+
+        if self.loadedBookings:
+            for periodID in self.loadedBookings:
+                for tableID in self.loadedBookings[periodID]:
+                    table = self.loadedBookings[periodID][tableID]
+
+                    saveData += (f"META,{periodID}|{tableID}\n"
+                                 f"booked,{table['booked']}\n"
+                                 f"bookedBy,{table['bookedBy']}\n"
+                                 f"timeBooked,{table['timeBooked']}\n"
+                                 f"task,{table['task']}\n"
+                                 f"teacher,{table['teacher']}\n")
+
+                    for student in table['students']:
+                        saveData += f"STUDENT,{student}\n"
+
+            with open(f"bookings/{self.currentLoadedDate}.booking", "w") as f:
+                f.write(saveData)
+
