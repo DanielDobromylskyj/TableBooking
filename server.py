@@ -11,6 +11,11 @@ import emailHandler
 
 import bcrypt
 
+# todo - Add Mobile Support For Webpages
+# todo - Tidy up the code in general
+# todo - Add documentation
+
+
 app = Flask(__name__)
 app.secret_key = open("secret_key.txt", "r").read()
 login_manager = LoginManager()
@@ -51,12 +56,17 @@ def load_user(user_id):
 
 @app.route('/')
 def home():
+    """ Returns the html code in the static/index.html file """
     with open("static/index.html", "r") as f:
         return f.read()
 
 @app.route('/login', methods=['POST'])
 def login():
-    args = eval(request.data.decode())
+    """
+    Compare username and password given with the Hashed passwords in our database.
+    If valid, create the instance of the user in the system
+    """
+    args = eval(request.data.decode()) # fixme - JSON?
 
     username = args['username']
     password = args['password']
@@ -73,6 +83,7 @@ def login():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    """ Return the respective webpage for the student/teacher dashboard"""
     if current_user.id in adminEmails:
         with open("static/teacherPortal.html", "r") as f:
             return f.read()
@@ -83,16 +94,18 @@ def dashboard():
 @app.route('/getPeriodOverview', methods=['POST'])
 @login_required
 def periodOverview():
+    """ If a teach, Return all booking datta for the given date/period """
     if current_user.id in adminEmails:
         return viewBookings.bookings.getTeacherPeriodData(request.json["date"], request.json["period"])
     return {}
 
-def extractName(email):
+def extractName(email): # fixme - Error handling?
     return email[3:].split("@")[0]
 
 @app.route('/mybookings')
 @login_required
-def myBookings():
+def myBookings(): # fixme - Javascript maybe?
+    """ Create a webpage to display the booking data """
     return viewBookings.load(
         current_user.id, extractName(current_user.id)
     )
@@ -114,6 +127,8 @@ def checkTablesInfo():
 @app.route('/CreateBooking', methods=["POST"])
 @login_required
 def createBooking():
+    """ Attempt to create a booking using the booking system,
+     returns the response of the booking system"""
     args = request.json
 
     r = viewBookings.bookings.createBooking(args["date"], args["period"], args["table"], current_user.id, args["students"], args["taskName"], args["teacher"])
@@ -130,17 +145,24 @@ def logout():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    """
+    If the method is GET, return the login form page
+    If the method is POST, validate the data recved from the forms,
+    If it is all valid, send a verification email and redirect to the
+    code input webpage
+    """
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        if ("," in email) or ("," in password):
-            return 'Comma In Email or Password, Please remove it.'
+        if ("," in email): # We dont need to check in the password as it is stored in HEX (Hashed)
+            return 'Comma In Email, Please remove it.'
 
         # Validate email format and domain
         if not re.match(r'^[a-zA-Z0-9._%+-]+@utcncst\.org$', email):
             return 'Invalid email address. Only email addresses ending with "@utcncst.org" are allowed.'
 
+        # Check for the email in our system
         if email in users.keys():
             return 'Email already in use.'
 
@@ -152,6 +174,7 @@ def register():
 
         # Redirect to a page for email verification
         return redirect(url_for('verify_email'))
+
     with open('static/register.html', "r") as f:
         return f.read()
 
@@ -162,7 +185,7 @@ def verify_email():
 
 @app.route('/verify-email-code', methods=["POST"])
 def verify_email_code():
-    code = eval(request.data.decode())["verification_code"]
+    code = eval(request.data.decode())["verification_code"] # fixme - JSON?
 
     for data in awaitingVerification:
         if time.time() - data["time"] > (60*5): # 5 mins
@@ -180,5 +203,5 @@ def verify_email_code():
 
 
 if __name__ == '__main__':
-    context = 'adhoc'
+    context = 'adhoc' # fixme - Get some real certs
     app.run(host="localhost", debug=True, ssl_context=context)
