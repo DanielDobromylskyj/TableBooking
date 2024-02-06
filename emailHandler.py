@@ -23,9 +23,11 @@ Subject: Verify Your Email
 DO NOT SHARE THIS CODE UNDER ANY CONDITIONS, IF SOMEONE IS ASKING YOU FOR IT, THEY ARE LIKELY TRYING TO SCAM YOU.
 Code: """ + str(code))
     except Exception as e:
+        server = None
         print(e)
     finally:
-        server.quit()
+        if server:
+            server.quit()
 
 
 if __name__ == "__main__":
