@@ -3,3 +3,5 @@ admins.txt
 emailPassword.txt
 users.txt
 secret_key.txt
+certificate.pem
+private_key.pem

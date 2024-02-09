@@ -29,13 +29,13 @@
     <div id="accountBox">
         <h2>Are you sure you want to delete your account?</h2>
         <p>This will NOT clear your bookings you have made</p>
-        <input type="password" id="password" name="password">
+        <input type="password" id="password" name="password" placeholder="password">
         <button onclick="DeleteMyAcc()">Delete</button>
     </div>
 
     <script>
         function DeleteMyAcc() {
-            const password = document.getElementById('password');
+            const password = document.getElementById('password').value;
 
             const response = fetch('/delete', {
                 method: 'POST',
@@ -45,7 +45,7 @@
                 body: JSON.stringify({ password: password })
             });
 
-            alert(response);
+            alert(response.status);
         }
     </script>
 </body>

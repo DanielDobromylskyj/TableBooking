@@ -12,8 +12,6 @@ import emailHandler
 import bcrypt
 
 # MAJOR
-# todo - Account Delete
-
 
 # MINOR
 # todo - Add Mobile Support For Webpages
@@ -44,6 +42,34 @@ def Hash(password):
 def verifyPassword(password, hash):
     return bcrypt.checkpw(password.encode(), bytes.fromhex(hash))
 
+MIN_PASSWORD_LENGTH = 6
+SPECAL_CHARS = list("!\"£$%^&*()_+-={}[]@~:;'#?><,./\\|¬`")
+
+def PasswordSecure(password):
+    if len(password) < MIN_PASSWORD_LENGTH:
+        return "Password Too Short"
+
+    hasNumber = False
+    for char in list(password):
+        if char.isdigit():
+            hasNumber = True
+
+    if hasNumber == False:
+        return "No Numeric Values"
+
+    hasSpecalChar = False
+    for char in list(password):
+        if char in SPECAL_CHARS:
+            hasSpecalChar = True
+
+    if hasSpecalChar == False:
+        return "No Special Character"
+
+    return True
+
+
+
+
 def updatePassword(email, password):
     global users
     users[email] = password
@@ -51,7 +77,18 @@ def updatePassword(email, password):
     with open("users.txt", "w") as f:
         f.write("\n".join([
             f"{email},{users[email]}" for email in users
-        ]))
+        ]) + "\n")
+
+def deleteAccount(email):
+    global users
+    users.pop(email)
+
+    with open("users.txt", "w") as f:
+        f.write("\n".join([
+            f"{email},{users[email]}" for email in users
+        ]) + "\n")
+
+
 
 def createAccount(email, password):
     with open("users.txt", "a") as f:
@@ -83,7 +120,7 @@ def login():
     """
     args = request.json
 
-    username = args['username']
+    username = args['username'].lower()
     password = args['password']
 
     # Check if username exists and password is correct
@@ -163,18 +200,24 @@ def new_password():
         auth = request.json["auth"]
 
         if auth not in passwordResetting:
-            return {"message": "Failed to change password"}, 422
+            return jsonify({"message": "Failed to change password"}), 422
 
         if passwordResetting[auth]['verified'] != True:
-            return {"message": "Failed to change password"}, 422
+            return jsonify({"message": "Failed to change password"}), 422
 
         if password != confirm:
-            return {"message": "Passwords are not the same"}, 422
+            return  jsonify({"message": "Passwords are not the same"}), 422
 
-        email = passwordResetting[auth]['email']
-        updatePassword(email, Hash(password))
+        result = PasswordSecure(password)
 
-        return {"message": "Complete"}, 200
+        if result == True:
+            email = passwordResetting[auth]['email']
+            updatePassword(email, Hash(password))
+
+            return  jsonify({"message": "Complete"}), 200
+
+        else:
+            return jsonify({"message": result}), 422
 
 @app.route('/delete', methods=['GET', 'POST'])
 @login_required
@@ -187,7 +230,10 @@ def deleteMyAccount():
         password = request.json['password']
 
         if verifyPassword(password, users[current_user.id]):
-            pass # todo
+            deleteAccount(current_user.id)
+
+            logout_user()
+            return "Deleted", 200
 
         else:
             return "Invalid Password", 422
@@ -207,7 +253,7 @@ def dashboard():
 @app.route('/account')
 @login_required
 def account():
-    """ Return the webpage for the users account settings"""
+    """ Return the webpage for the users account settings """
     with open("static/account.html", "r") as f:
         return f.read().replace("@@@USEREMAIL@@@", current_user.id)
 
@@ -275,26 +321,33 @@ def register():
     code input webpage
     """
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        confirm = request.form['confirm']
+        email = request.json['email']
+        password = request.json['password']
+        confirm = request.json['confirm']
 
         if password != confirm:
-            return 'Passwords do not match'
+            return {'message': 'Passwords do not match'}
 
-        if (('accept_privacy_policy' in request.form) and (request.form['accept_privacy_policy'] != "on")) or ('accept_privacy_policy' not in request.form):
-            return 'You have not agreed to the privacy policy'
+        print(request.json['accept_privacy_policy'])
+
+        if (request.json['accept_privacy_policy'] != True) or ('accept_privacy_policy' not in request.json):
+            return {'message': 'You have not agreed to the privacy policy'}
 
         if ("," in email): # We don't need to check in the password as it is stored in HEX (Hashed)
-            return 'Comma in email, Please remove it.'
+            return {'message': 'Comma in email, Please remove it.'}
 
         # Validate email format and domain
         if not re.match(r'^[a-zA-Z0-9._%+-]+@utcncst\.org$', email):
-            return 'Invalid email address. Only email addresses ending with "@utcncst.org" are allowed.'
+            return {'message': 'Invalid email address. Only email addresses ending with "@utcncst.org" are allowed.'}
 
         # Check for the email in our system
         if email in users.keys():
-            return 'Email already in use.'
+            return {'message': 'Email already in use.'}
+
+        result = PasswordSecure(password)
+
+        if result == False:
+            return {'message': result}
 
         # Generate verification code
         verification_code = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
@@ -308,7 +361,7 @@ def register():
         })
 
         # Redirect to a page for email verification
-        return redirect(url_for('verify_email'))
+        return {'message': 'Complete'}
 
     with open('static/register.html', "r") as f:
         return f.read()
@@ -342,5 +395,6 @@ def policy():
 
 
 if __name__ == '__main__':
-    context = 'adhoc' # fixme - Get some real certs
+    context = ('certificate.pem', 'private_key.pem')
+
     app.run(host="localhost", debug=False, ssl_context=context)

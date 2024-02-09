@@ -197,13 +197,11 @@ timeBooked,
 task,
 teacher,
 META,4|4
-booked,True
-bookedBy,u21ddobromylskyj@utcncst.org
-timeBooked,08:02 07/02/2024
-task,Fggg
-teacher,Ftvg
-STUDENT,Dgvuu
-STUDENT,u21ddobromylskyj@utcncst.org
+booked,False
+bookedBy, 
+timeBooked,
+task,
+teacher,
 META,4|5
 booked,False
 bookedBy, 
@@ -235,11 +233,13 @@ timeBooked,
 task,
 teacher,
 META,4|10
-booked,False
-bookedBy, 
-timeBooked,
-task,
-teacher,
+booked,True
+bookedBy,u21vnovoselovs@utcncst.org
+timeBooked,11:15 07/02/2024
+task,uguig
+teacher,uotgfyghn
+STUDENT,jkhil
+STUDENT,u21vnovoselovs@utcncst.org
 META,5|1
 booked,False
 bookedBy, 
@@ -331,11 +331,13 @@ timeBooked,
 task,
 teacher,
 META,6|6
-booked,False
-bookedBy, 
-timeBooked,
-task,
-teacher,
+booked,True
+bookedBy,U21VLukjanecs@utcncst.org
+timeBooked,11:15 07/02/2024
+task,computer sciencs
+teacher,hvgjgkhlojkhl
+STUDENT,U21VLukjanecs@utcncst.org
+STUDENT,U21VLukjanecs@utcncst.org
 META,6|7
 booked,False
 bookedBy, 
@@ -361,11 +363,15 @@ timeBooked,
 task,
 teacher,
 META,7|1
-booked,False
-bookedBy, 
-timeBooked,
-task,
-teacher,
+booked,True
+bookedBy,u20zsilver@utcncst.org
+timeBooked,14:13 08/02/2024
+task,science hw
+teacher,J Thomas
+STUDENT,dan
+STUDENT,ada
+STUDENT,vlad
+STUDENT,u20zsilver@utcncst.org
 META,7|2
 booked,False
 bookedBy, 

@@ -125,6 +125,10 @@ class Manager:
         if len(self.getBookingsFor(by, date)) >= 2:
             return "You already have 2 tables booked today"
 
+        for email in otherStudents:
+            if email.endswith("@utcncst.org") == False:
+                return "Invalid Student Email"
+
         if self.tableFree(period, table):
             otherStudents.append(by)
             self.bookTable(period, table, by, otherStudents, task, teacher)

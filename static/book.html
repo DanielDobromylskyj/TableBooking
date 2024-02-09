@@ -101,6 +101,16 @@
 
     <script>
         let activeBookingForm = null;
+        var teachers = ["C Andrews", "C Oliff", "K Whitelam", "M Skilton",
+            "D Masdin", "L Doheny", "L Moralee", "J Brown", "J Thomas",
+            "B Walker", "J Hudson", "T Mehegan", "D Attwell",
+            "G Muff", "T Pitchers", "E Palik", "S Brooks",
+            "C Clifford", "R Chng", "P Clements", "J Dyball",
+            "A Forsey", "L George", "I Green", "S Hammond",
+            "L Leverton", "E Moyo", "M Pinillos", "L Pope",
+            "S Robson", "L Smith", "T Southerden", "P Temple",
+            "L Whiting Smith"].sort();
+
 
         function getTableInfo() {
             var date = document.getElementById("date").value;
@@ -152,7 +162,7 @@
                 for (var i = 1; i <= 3; i++) {
                     var input = document.createElement("input");
                     input.type = "text";
-                    input.placeholder = "Student " + i + " Email";
+                    input.placeholder = "Other Student's Email";
                     input.className = "studentEmail";
                     input.onclick = function(event) {
                         event.stopPropagation(); // Prevent click event from bubbling up
@@ -170,13 +180,19 @@
                 };
                 bookingForm.appendChild(input);
 
-                var input = document.createElement("input");
-                input.type = "text";
-                input.placeholder = "Teacher";
+                var input = document.createElement("select");
                 input.className = "TeacherName";
                 input.onclick = function(event) {
                     event.stopPropagation();
                 };
+
+                teachers.forEach(function(person) {
+                    var option = document.createElement("option");
+                    option.text = person;
+                    option.value = person;
+                    input.add(option);
+                });
+
                 bookingForm.appendChild(input);
 
                 var bookButton = document.createElement("button");
