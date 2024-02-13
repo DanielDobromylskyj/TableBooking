@@ -257,6 +257,10 @@
             .then(response => response.json())
             .then(data => {
                 alert(data.message);
+
+                if (data.message === 'You have now booked a table') {
+                    location.reload()
+                }
             })
             .catch(error => console.log('Error:', error));
 

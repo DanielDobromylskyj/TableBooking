@@ -11,12 +11,8 @@ import emailHandler
 
 import bcrypt
 
-# MAJOR
-
-# MINOR
+# My Todos
 # todo - Add Mobile Support For Webpages
-# todo - Tidy up the code in general
-# todo - Add documentation
 
 
 app = Flask(__name__)
@@ -134,6 +130,8 @@ def login():
 
 @app.route("/password_reset", methods=["POST", "GET"])
 def passwordReset():
+    """ Initial Email Confirmation Page For Resetting A Password """
+
     if request.method == "GET":
         with open("static/reset_password.html", "r") as f:
             return f.read()
@@ -273,7 +271,7 @@ def extractName(email):
 
 @app.route('/mybookings')
 @login_required
-def myBookings(): # fixme - Javascript maybe?
+def myBookings():
     """ Create a webpage to display the booking data """
     return viewBookings.load(
         current_user.id, extractName(current_user.id)
@@ -327,8 +325,6 @@ def register():
 
         if password != confirm:
             return {'message': 'Passwords do not match'}
-
-        print(request.json['accept_privacy_policy'])
 
         if (request.json['accept_privacy_policy'] != True) or ('accept_privacy_policy' not in request.json):
             return {'message': 'You have not agreed to the privacy policy'}
