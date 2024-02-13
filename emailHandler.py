@@ -3,10 +3,12 @@ import smtplib, ssl
 with open("emailPassword.txt", "r") as f:
     password = f.read()
 
+with open("emailName.txt", "r") as f:
+    sender_email = f.read()
+
 def SendCode(to, code):
     smtp_server = "smtp.gmail.com"
     port = 587  # For starttls
-    sender_email = "utcntablebooking@gmail.com"
 
     # Create a secure SSL context
     context = ssl.create_default_context()

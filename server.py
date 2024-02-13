@@ -1,22 +1,18 @@
 from flask import Flask, request, redirect, url_for, jsonify
 from flask_login import LoginManager, current_user, UserMixin, login_user, logout_user, login_required
-import re
-import random
-import string
+import re, random, string, secrets, time
+import bcrypt
 
-import time
 
 import viewBookings
 import emailHandler
-
-import bcrypt
 
 # My Todos
 # todo - Add Mobile Support For Webpages
 
 
 app = Flask(__name__)
-app.secret_key = open("secret_key.txt", "r").read()
+app.secret_key = secrets.token_hex()
 
 login_manager = LoginManager()
 login_manager.init_app(app)
