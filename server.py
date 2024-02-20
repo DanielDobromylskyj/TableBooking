@@ -60,8 +60,6 @@ def PasswordSecure(password):
     return True
 
 
-
-
 def updatePassword(email, password):
     global users
     users[email] = password
@@ -385,8 +383,16 @@ def policy():
     with open("static/privacy_policy.html", "r") as f:
         return f.read()
 
+def getLocalIp():
+    import socket
+
+    return socket.gethostbyname(socket.gethostname())
 
 if __name__ == '__main__':
-    context = ('certificate.pem', 'private_key.pem')
+    with open('sslContext.txt', "r") as f:
+        context = tuple(f.read().split('\n'))
 
-    app.run(host="localhost", debug=False, ssl_context=context)
+    if len(context) == 1:
+        context = context[0]
+
+    app.run(host=getLocalIp(), port=443, debug=False, ssl_context=context)
