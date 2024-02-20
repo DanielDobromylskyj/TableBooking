@@ -10,10 +10,16 @@ class Manager:
         self.allStudentsBooked = []
 
     def loadBooking(self, date):
+        # Create booking files if needed
         tomorrowsDate = (datetime.datetime.now().date() + datetime.timedelta(days=1))
         if os.path.exists(f"bookings/{tomorrowsDate.strftime('%Y-%m-%d')}.booking") == False:
-            if (tomorrowsDate.weekday() != 5) and (tomorrowsDate.weekday() != 6): # not Sat/Sun
+            if (tomorrowsDate.weekday() != 5) and (tomorrowsDate.weekday() != 6):  # not Sat/Sun
                 self.createEmptyBookings(tomorrowsDate.strftime('%Y-%m-%d'))
+
+        todaysDate = datetime.datetime.now().date()
+        if os.path.exists(f"bookings/{todaysDate.strftime('%Y-%m-%d')}.booking") == False:
+            if (todaysDate.weekday() != 5) and (todaysDate.weekday() != 6):  # not Sat/Sun
+                self.createEmptyBookings(todaysDate.strftime('%Y-%m-%d'))
 
 
         if date == self.currentLoadedDate:

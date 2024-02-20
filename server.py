@@ -9,6 +9,7 @@ import emailHandler
 
 # My Todos
 # todo - Add Mobile Support For Webpages
+# todo - On login / sign up make it say if caps lock is on
 
 
 app = Flask(__name__)
@@ -252,7 +253,7 @@ def account():
 @app.route('/getPeriodOverview', methods=['POST'])
 @login_required
 def periodOverview():
-    """ If a teach, Return all booking datta for the given date/period """
+    """ If a teach, Return all booking data for the given date/period """
     if current_user.id in adminEmails:
         return viewBookings.bookings.getTeacherPeriodData(request.json["date"], request.json["period"])
     return {}
