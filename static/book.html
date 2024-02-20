@@ -26,16 +26,12 @@
                 margin-top: 20px;
             }
 
-            .selectors {
-                margin-top: 20px;
-                text-align: center;
-            }
 
             .button {
-                width: 30%;
-                margin: 10px;
-                border: 2px solid green;
-                background: #ffe;
+                width: 20%;
+                margin: 15px;
+                border: 2px solid black;
+                background: white;
                 border-radius: 5px;
                 display: inline-block;
             }
@@ -67,16 +63,36 @@
                 padding-bottom: 10%;
             }
 
-            .table {
-                margin: 5px;
-                padding: 10px;
-                border: 1px solid #ccc;
-                cursor: not-allowed;
+            .booking-form input {
+                display: block;
+                margin: 0 auto; /* Center the input boxes horizontally */
+                margin-bottom: 5px;
             }
 
-            .booking-form {
-                margin-top: 10px;
-                text-align: center; /* Center the form content */
+            #date {
+                margin-top: 0;
+            }
+
+            #tableSelectorTables {
+                position: relative;
+                height: 500px;
+            }
+
+            .table {
+                position: absolute;
+                width: 75px;
+                height: 75px;
+                border-radius: 50%;
+                background-color: rgba(255, 0, 0, 0.5);
+                border: none;
+                outline: none;
+                cursor: pointer;
+                transform: translate(-50%, -50%);
+                transition: transform 0.2s ease-in-out;
+            }
+
+            .table:hover {
+                transform: translate(-50%, -50%) scale(1.1);
             }
 
             .booking-form input {
@@ -84,23 +100,63 @@
                 margin: 0 auto; /* Center the input boxes horizontally */
                 margin-bottom: 5px;
             }
+
     </style>
 </head>
 <body>
     <div class="header">
         <h2 class="headerTitle">Table Booking</h2>
     </div>
+
     <div class="box">
-        <label for="date">Date:</label>
-        <input type="date" id="date" required>
-        <label for="period">Period:</label>
-        <input type="number" id="period" min="1" max="7" required>
-        <button class="button" onclick="getTableInfo()">Check Availability</button>
-        <div id="table-container"></div>
+        <h2 style="margin: 5px">Book For:</h2>
+        <button class="button" onclick="loadToday()">Today</button>
+        <button class="button" onclick="loadTomorrow()">Tomorrow</button>
+    </div>
+
+    <div class="box" hidden="hidden" id="periodSelector">
+        <h2 id="date"></h2>
+        <div id="periodSelectorBoxes"></div>
+    </div>
+
+    <div class="box" hidden="hidden" id="tableSelector">
+        <h2 id="period"></h2>
+        <div id="tableSelectorTables">
+            <button class='table' id="Table1" style="top: 90%; left:15%" onclick="selectTable('1')">Table 1</button>
+            <button class='table' id="Table2" style="top: 70%; left:30%" onclick="selectTable('2')">Table 2</button>
+            <button class='table' id="Table3" style="top: 50%; left:15%" onclick="selectTable('3')">Table 3</button>
+            <button class='table' id="Table4" style="top: 30%; left:30%" onclick="selectTable('4')">Table 4</button>
+            <button class='table' id="Table5" style="top: 10%; left:15%" onclick="selectTable('5')">Table 5</button>
+
+            <button class='table' id="Table6" style="top: 90%; left:85%" onclick="selectTable('6')">Table 6</button>
+            <button class='table' id="Table7" style="top: 70%; left:85%" onclick="selectTable('7')">Table 7</button>
+            <button class='table' id="Table8" style="top: 50%; left:85%" onclick="selectTable('8')">Table 8</button>
+            <button class='table' id="Table9" style="top: 30%; left:85%" onclick="selectTable('9')">Table 9</button>
+            <button class='table' id="Table10" style="top: 10%; left:85%" onclick="selectTable('10')">Table 10</button>
+        </div>
+    </div>
+
+    <div class="box" hidden="hidden" id="bookingInfo">
+        <h2 id="tableNumber"></h2>
+        <div class="booking-form">
+            <input type="text" placeholder="Other Student's Email" class="studentEmail">
+            <input type="text" placeholder="Other Student's Email" class="studentEmail">
+            <input type="text" placeholder="Other Student's Email" class="studentEmail">
+
+            <input type="text" placeholder="Group Task" class="TaskName">
+            <select class="TeacherName">
+                <!-- Options are loaded by JavaScript -->
+            </select>
+            <button onclick="bookTable()">Book</button>
+        </div>
     </div>
 
     <script>
-        let activeBookingForm = null;
+        var selectedDate = null;
+        var selectedPeriod = null;
+        var bookedTables = null;
+        var currentTable = null;
+
         var teachers = ["C Andrews", "C Oliff", "K Whitelam", "M Skilton",
             "D Masdin", "L Doheny", "L Moralee", "J Brown", "J Thomas",
             "B Walker", "J Hudson", "T Mehegan", "D Attwell",
@@ -111,110 +167,200 @@
             "S Robson", "L Smith", "T Southerden", "P Temple",
             "L Whiting Smith"].sort();
 
+        var input = document.querySelector('.TeacherName');
 
-        function getTableInfo() {
-            var date = document.getElementById("date").value;
-            var period = document.getElementById("period").value;
+        teachers.forEach(function(person) {
+            var option = document.createElement("option");
+            option.text = person;
+            option.value = person;
+            input.add(option);
+        });
 
-            fetch("/getTableInfo?date=" + date + "&period=" + period)
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data.toString());
-                    if (data.toString() !== "{}") {
-                        displayTables(data);
-                    } else {
-                        alert("Invalid Date");
+        function formatDate(date) {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+            const dayOfWeek = days[date.getDay()];
+            const dayOfMonth = date.getDate();
+            const month = months[date.getMonth()];
+
+            // Add the suffix to the day of the month
+            let suffix;
+            switch (dayOfMonth) {
+                case 1:
+                case 21:
+                case 31:
+                    suffix = 'st';
+                    break;
+                case 2:
+                case 22:
+                    suffix = 'nd';
+                    break;
+                case 3:
+                case 23:
+                    suffix = 'rd';
+                    break;
+                default:
+                    suffix = 'th';
+            }
+
+            return `${dayOfWeek} ${dayOfMonth}${suffix} ${month}`;
+        }
+
+        function loadToday() {
+            let today = new Date();
+            let year = today.getFullYear();
+            let month = (today.getMonth() + 1).toString().padStart(2, '0'); // Adding 1 to month since it's zero-based
+            let day = today.getDate().toString().padStart(2, '0');
+            selectedDate = year + "-" + month + "-" + day;
+            loadDay(today.getDay(), formatDate(today));
+        }
+
+        function loadTomorrow() {
+            let tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            let yearTomorrow = tomorrow.getFullYear();
+            let monthTomorrow = (tomorrow.getMonth() + 1).toString().padStart(2, '0'); // Adding 1 to month since it's zero-based
+            let dayTomorrow = tomorrow.getDate().toString().padStart(2, '0');
+            selectedDate = yearTomorrow + "-" + monthTomorrow + "-" + dayTomorrow;
+            loadDay(tomorrow.getDay(), formatDate(tomorrow));
+        }
+
+        function loadDay(day, date) {
+            if ((day === 0) || (day === 6)) { // Sunday or Saturday
+                document.getElementById("periodSelector").hidden = true;
+            } else {
+
+                document.getElementById("date").innerHTML = date;
+
+                if (day === 1) { // Monday
+                    generatePeriodBoxes([50, 50, 15, 50, 50, 25, 50, 50, 50]);
+                } else if (day === 5) { // Friday
+                    generatePeriodBoxes([50, 50, 15, 50, 50, 25, 50, 50, 50]);
+                } else { // Tuesday, Wednesday, Thursday
+                    generatePeriodBoxes([50, 50, 15, 50, 50, 30, 50, 50, 50]);
+                }
+                document.getElementById("periodSelector").hidden = false;
+            }
+        }
+
+        function generatePeriodBoxes(periods) {
+            const container = document.getElementById('periodSelectorBoxes');
+
+
+            container.innerHTML = '';
+            var period = 1;
+
+            periods.forEach((periodLength) => {
+                let box = document.createElement('div');
+                box.classList.add('periodBox');
+
+                let width = (periodLength / 50) * 100;
+                box.style.width = `${width}px`;
+
+                // Static Styling
+                box.style.height = '100px';
+                box.style.display = 'inline-block';
+                box.style.borderColor = 'black'
+                box.style.borderStyle = 'solid'
+                box.style.borderWidth = '1px'
+
+                // Set the flag for clickability
+                let clickable = (periodLength === 50); // Only full periods can be booked
+                box.setAttribute('data-clickable', clickable);
+
+                // Set inner html / text
+                if (clickable) {
+                    box.innerHTML = '<p>Period ' + period + '</p>'
+                } else if (periodLength === 15) {
+                    box.innerHTML = '<p style="rotate: 90deg; text-align: center">Break</p>'
+                } else if (periodLength === 30) {
+                    box.innerHTML = '<p>Lunch</p>'
+                } else {
+                    box.innerHTML = '<p>E³</p>'
+                }
+
+                // Increment period counter if this is a lesson
+                if (clickable) {
+                    period ++;
+                }
+
+                box.addEventListener('mouseenter', function() {
+                    if (clickable) {
+                        box.style.backgroundColor = 'rgba(100, 100, 250, 0.5)';
                     }
-                })
-                .catch(error => console.log("Error!"));
-        }
-
-        function displayTables(tableData) {
-            var tableContainer = document.getElementById("table-container");
-            tableContainer.innerHTML = ""; // Clear previous content
-
-            // Loop through the table data and display tables
-            for (var table in tableData) {
-                var tableElement = document.createElement("div");
-                tableElement.innerHTML = "Table " + table + ": " + ((tableData[table] === "True") ? "Booked" : "Available");
-                tableElement.className = "table";
-                if (tableData[table] === "False") {
-                    tableElement.onclick = function() {
-                        toggleBookingForm(this.dataset.table);
-                    };
-                    tableElement.dataset.table = table; // Store table number as data attribute
-                    tableElement.style.cursor = "pointer";
-                }
-                tableContainer.appendChild(tableElement);
-            }
-        }
-
-        function toggleBookingForm(tableNumber) {
-            if (activeBookingForm !== null && activeBookingForm.dataset.table !== tableNumber) {
-                activeBookingForm.parentNode.removeChild(activeBookingForm);
-                activeBookingForm = null;
-            }
-
-            if (activeBookingForm === null) {
-                var bookingForm = document.createElement("div");
-                bookingForm.className = "booking-form";
-
-                for (var i = 1; i <= 3; i++) {
-                    var input = document.createElement("input");
-                    input.type = "text";
-                    input.placeholder = "Other Student's Email";
-                    input.className = "studentEmail";
-                    input.onclick = function(event) {
-                        event.stopPropagation(); // Prevent click event from bubbling up
-                    };
-                    bookingForm.appendChild(input);
-                }
-
-                // Work Info
-                var input = document.createElement("input");
-                input.type = "text";
-                input.placeholder = "Group Task";
-                input.className = "TaskName";
-                input.onclick = function(event) {
-                    event.stopPropagation(); // Prevent click event from bubbling up
-                };
-                bookingForm.appendChild(input);
-
-                var input = document.createElement("select");
-                input.className = "TeacherName";
-                input.onclick = function(event) {
-                    event.stopPropagation();
-                };
-
-                teachers.forEach(function(person) {
-                    var option = document.createElement("option");
-                    option.text = person;
-                    option.value = person;
-                    input.add(option);
                 });
 
-                bookingForm.appendChild(input);
+                box.addEventListener('mouseleave', function() {
+                    if (clickable) {
+                        box.style.backgroundColor = '';
+                    }
+                });
 
-                var bookButton = document.createElement("button");
-                bookButton.textContent = "Book";
-                
-                bookButton.onclick = function(event) {
-                    bookTable(tableNumber, bookingForm);
-                    event.stopPropagation()
-                };
+                box.addEventListener('click', function () {
+                    if (clickable) {
+                        loadPeriodData(box.innerHTML.split(' ')[1].split("<")[0]);
+                    }
+                })
 
-                bookingForm.appendChild(bookButton);
+                container.appendChild(box);
+            });
+        }
 
-                var tableDiv = document.querySelector('[data-table="' + tableNumber + '"]');
-                tableDiv.appendChild(bookingForm);
+        function loadPeriodData(period) {
+            let response = fetch('/getTableInfo?date=' + selectedDate + "&period=" + period)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    alert("Invalid Period Or Date")
+                })
+                .then(data => {
+                    displayPeriodData(period, data);
+                })
+                .catch(error => {
+                    alert("Failed To Get Period Info")
+                });
+        }
 
-                activeBookingForm = bookingForm;
+        function displayPeriodData(period, tables) {
+            document.getElementById("period").innerHTML = 'Period ' + period;
+            selectedPeriod = period;
+            bookedTables = tables
+
+            for (let i = 0; i < 10; i++) {
+                var table = document.getElementById("Table" + (i+1));
+                var isFree = tables[i+1] === "False";
+
+
+                if (isFree) {
+                    table.style.backgroundColor = 'rgba(10, 250, 10, 0.5)';
+                } else {
+                    table.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
+                }
+            }
+
+
+
+            document.getElementById('tableSelector').hidden = false;
+        }
+
+        function selectTable(tableNum) {
+            if (bookedTables[tableNum] === "False") {
+                document.getElementById('tableNumber').innerHTML = 'Table ' + tableNum + ', For Period ' + selectedPeriod + ', ' + selectedDate;
+                document.getElementById('bookingInfo').hidden = false;
+                currentTable = tableNum
+            } else {
+                document.getElementById('bookingInfo').hidden = true;
+                currentTable = null;
             }
         }
 
-        function bookTable(tableNumber, bookingForm) {
-            var studentEmails = [];
-            var inputs = bookingForm.getElementsByClassName("studentEmail");
+        function bookTable() {
+            let studentEmails = [];
+            const bookingForm = document.getElementsByClassName("booking-form")[0];
+
+            let inputs = bookingForm.getElementsByClassName("studentEmail");
             for (let i = 0; i < inputs.length; i++) {
                 input = inputs[i];
                 if (input.value.trim() !== "") {
@@ -227,8 +373,8 @@
                 return;
             }
 
-            var taskInfo = bookingForm.getElementsByClassName("TaskName")[0].value;
-            var teacherName = bookingForm.getElementsByClassName("TeacherName")[0].value;
+            const taskInfo = bookingForm.getElementsByClassName("TaskName")[0].value;
+            const teacherName = bookingForm.getElementsByClassName("TeacherName")[0].value;
 
             if (taskInfo === "") {
                 alert("Please enter the task you are doing");
@@ -240,15 +386,17 @@
                 return;
             }
 
+            console.log();
+
             fetch("/CreateBooking", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    date: document.getElementById("date").value,
-                    period: document.getElementById("period").value,
-                    table: tableNumber,
+                    date: selectedDate,
+                    period: selectedPeriod,
+                    table: currentTable,
                     students: studentEmails,
                     taskName: taskInfo,
                     teacher: teacherName
@@ -263,11 +411,8 @@
                 }
             })
             .catch(error => console.log('Error:', error));
-
-            // Remove the booking form after booking
-            bookingForm.parentNode.removeChild(bookingForm);
-            activeBookingForm = null;
         }
+
     </script>
 </body>
 </html>
