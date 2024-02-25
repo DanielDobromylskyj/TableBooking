@@ -15,3 +15,11 @@ flask, flask_login, re, bcrypt.
 This program was developed on python 3.9 and may not produce the wanted results on earlier or later versions.
 
 This program was developed and tested on a Windows 11 machine, results may vary on differnet operating systems
+
+
+OVERVIEW (Never used .md Files much, give me some slack):
+
+
+Login Page:
+
+![Login Page]()
