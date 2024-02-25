@@ -8,8 +8,9 @@
     <style>
         .headerTitle {
             text-align: center;
-            font-size: 40px;
-            color: white;
+            font-size: 50px;
+            color: black;
+            margin-bottom: 5px;
         }
 
         .header {
@@ -24,14 +25,26 @@
             margin-top: 50px;
         }
 
+        .box {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 60%;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+
         .button {
-            width: 30%;
-            margin: 10px;
-            border: 2px solid green;
-            background: #ffe;
+            width: 20%;
+            margin: 15px;
+            border: 2px solid black;
+            background: white;
             border-radius: 5px;
             display: inline-block;
         }
+
         a {
             display: block;
             width: 100%;
@@ -61,13 +74,16 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="box">
         <h2 class="headerTitle">UTCN Library Table Booker</h2>
+        <p style="margin: 5px; margin-bottom: 10px">Version 0.7.2</p>
     </div>
-    <div class="selectors">
-        <div class="button"><a href="/mybookings">View My Bookings</a></div>
+
+    <div class="box">
+        <h2>What Would You Like To Do?</h2>
+        <div class="button"><a href="/mybookings">View Bookings</a></div>
         <div class="button"><a href="/book">Create A Booking</a></div>
-        <div class="button"><a href="/account">My Account</a></div>
+        <div class="button"><a href="/account">View Account</a></div>
     </div>
 </body>
 </html>

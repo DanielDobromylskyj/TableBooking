@@ -3,8 +3,8 @@ from flask_login import LoginManager, current_user, UserMixin, login_user, logou
 import re, random, string, secrets, time
 import bcrypt
 
-
 import viewBookings
+
 import emailHandler
 
 # My Todos
@@ -19,24 +19,34 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 
+def unauthorized():
+    return redirect(url_for('home', sessionExpired=True))
+
+
+login_manager.unauthorized_callback = unauthorized
+
 awaitingVerification = []
 passwordResetting = {}
 
-with open("users.txt", "r") as f:
-    users = {x.split(",")[0]: x.split(",")[1] for x in f.read().split("\n") if x != ""}
+with open("users.txt", "r") as fr:
+    users = {x.split(",")[0]: x.split(",")[1] for x in fr.read().split("\n") if x != ""}
 
-with open("admins.txt", "r") as f:
-    adminEmails = f.read().split("\n")
+with open("admins.txt", "r") as fr:
+    adminEmails = fr.read().split("\n")
+
 
 def Hash(password):
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode(), salt).hex()
 
+
 def verifyPassword(password, hash):
     return bcrypt.checkpw(password.encode(), bytes.fromhex(hash))
 
+
 MIN_PASSWORD_LENGTH = 6
 SPECAL_CHARS = list("!\"£$%^&*()_+-={}[]@~:;'#?><,./\\|¬`")
+
 
 def PasswordSecure(password):
     if len(password) < MIN_PASSWORD_LENGTH:
@@ -70,6 +80,7 @@ def updatePassword(email, password):
             f"{email},{users[email]}" for email in users
         ]) + "\n")
 
+
 def deleteAccount(email):
     global users
     users.pop(email)
@@ -80,7 +91,6 @@ def deleteAccount(email):
         ]) + "\n")
 
 
-
 def createAccount(email, password):
     with open("users.txt", "a") as f:
         f.write(f"{email},{password}\n")
@@ -88,8 +98,10 @@ def createAccount(email, password):
     global users
     users[email] = password
 
+
 class User(UserMixin):
     pass
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -97,11 +109,19 @@ def load_user(user_id):
     user.id = user_id
     return user
 
-@app.route('/')
+
+@app.route('/', methods=['GET', 'POST'])
 def home():
     """ Returns the html code in the static/index.html file """
+
     with open("static/index.html", "r") as f:
-        return f.read()
+        html = f.read()
+
+        if ('sessionExpired' in request.args) and (request.args['sessionExpired'] == 'True'):
+            return html.replace('hidden="hidden"', '')
+
+    return html
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -122,6 +142,7 @@ def login():
         return redirect(url_for('dashboard'))
     else:
         return "Invalid Email Or Password", 401
+
 
 @app.route("/password_reset", methods=["POST", "GET"])
 def passwordReset():
@@ -154,6 +175,7 @@ def passwordReset():
 
     else:
         return "Bad Method"
+
 
 @app.route('/verify_password_email', methods=["POST", "GET"])
 def verify_password_email():
@@ -199,7 +221,7 @@ def new_password():
             return jsonify({"message": "Failed to change password"}), 422
 
         if password != confirm:
-            return  jsonify({"message": "Passwords are not the same"}), 422
+            return jsonify({"message": "Passwords are not the same"}), 422
 
         result = PasswordSecure(password)
 
@@ -207,10 +229,11 @@ def new_password():
             email = passwordResetting[auth]['email']
             updatePassword(email, Hash(password))
 
-            return  jsonify({"message": "Complete"}), 200
+            return jsonify({"message": "Complete"}), 200
 
         else:
             return jsonify({"message": result}), 422
+
 
 @app.route('/delete', methods=['GET', 'POST'])
 @login_required
@@ -231,6 +254,7 @@ def deleteMyAccount():
         else:
             return "Invalid Password", 422
 
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -250,6 +274,7 @@ def account():
     with open("static/account.html", "r") as f:
         return f.read().replace("@@@USEREMAIL@@@", current_user.id)
 
+
 @app.route('/getPeriodOverview', methods=['POST'])
 @login_required
 def periodOverview():
@@ -258,11 +283,13 @@ def periodOverview():
         return viewBookings.bookings.getTeacherPeriodData(request.json["date"], request.json["period"])
     return {}
 
+
 def extractName(email):
     try:
         return email[3:].split("@")[0]
     except:
         return "Bad Email"
+
 
 @app.route('/mybookings')
 @login_required
@@ -286,6 +313,7 @@ def checkTablesInfo():
     date, period = request.args["date"], request.args["period"]
     return viewBookings.bookings.getPeriodData(date, period)
 
+
 @app.route('/CreateBooking', methods=["POST"])
 @login_required
 def createBooking():
@@ -293,9 +321,9 @@ def createBooking():
      returns the response of the booking system """
     args = request.json
 
-    r = viewBookings.bookings.createBooking(args["date"], args["period"], args["table"], current_user.id, args["students"], args["taskName"], args["teacher"])
+    r = viewBookings.bookings.createBooking(args["date"], args["period"], args["table"], current_user.id,
+                                            args["students"], args["taskName"], args["teacher"])
     return {"message": str("Internal Booking System Did Not Respond" if r == None else r)}
-
 
 
 @app.route('/logout')
@@ -314,6 +342,9 @@ def register():
     code input webpage
     """
     if request.method == 'POST':
+        if ('email' not in request.json) or ('password' not in request.json) or ('confirm' not in request.json):
+            return {'message': 'Invalid request'}
+
         email = request.json['email']
         password = request.json['password']
         confirm = request.json['confirm']
@@ -321,10 +352,13 @@ def register():
         if password != confirm:
             return {'message': 'Passwords do not match'}
 
-        if (request.json['accept_privacy_policy'] != True) or ('accept_privacy_policy' not in request.json):
+        if 'accept_privacy_policy' not in request.json:
             return {'message': 'You have not agreed to the privacy policy'}
 
-        if ("," in email): # We don't need to check in the password as it is stored in HEX (Hashed)
+        if (request.json['accept_privacy_policy'] != True):
+            return {'message': 'You have not agreed to the privacy policy'}
+
+        if ("," in email):  # We don't need to check in the password as it is stored in HEX (Hashed)
             return {'message': 'Comma in email, Please remove it.'}
 
         # Validate email format and domain
@@ -357,26 +391,27 @@ def register():
     with open('static/register.html', "r") as f:
         return f.read()
 
+
 @app.route('/verify-email')
 def verify_email():
     with open("static/verify_email.html", "r") as f:
         return f.read()
+
 
 @app.route('/verify-email-code', methods=["POST"])
 def verify_email_code():
     code = request.json["verification_code"]
 
     for data in awaitingVerification:
-        if time.time() - data["time"] > (60*5): # 5 mins
+        if time.time() - data["time"] > (60 * 5):  # 5 mins
             awaitingVerification.remove(data)
             continue
 
         if data["verification_code"] == code:
             createAccount(data['email'], data['password'])
-            return {"message":"Verified!"}
+            return {"message": "Verified!"}
 
-
-    return {"message":"Failed To Verify"}
+    return {"message": "Failed To Verify"}
 
 
 @app.route("/privacy_policy")
@@ -384,10 +419,12 @@ def policy():
     with open("static/privacy_policy.html", "r") as f:
         return f.read()
 
+
 def getLocalIp():
     import socket
 
     return socket.gethostbyname(socket.gethostname())
+
 
 if __name__ == '__main__':
     with open('sslContext.txt', "r") as f:

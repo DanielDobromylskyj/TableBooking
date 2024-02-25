@@ -1,2 +1,1 @@
-certificate.pem
-private_key.pem
+adhoc

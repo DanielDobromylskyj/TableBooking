@@ -23,16 +23,39 @@
             text-align: center;
         }
 
+        .button {
+            width: 40%;
+            margin: 15px;
+            border: 2px solid black;
+            background: white;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        a {
+            display: block;
+            width: 100%;
+            line-height: 2em;
+            text-align: center;
+            font-size: 16px;
+            color: black;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a:hover {
+            color: red;
+            background: #eff;
+        }
+
     </style>
 </head>
 <body>
-    <div id="accountBox">
-        <h2>My Account</h2>
-        <p id="email">@@@USEREMAIL@@@</p>
-        <a href="/password_reset">Reset My Password</a>
-        <a href="/delete">Delete My Account</a>
-        <a href="/logout">Log out</a>
-
+    <div class="box" id="accountBox">
+        <h2 style="margin-bottom: 5px">Account Settings</h2>
+        <p style="margin-top: 0px">(@@@USEREMAIL@@@)</p>
+        <div class="button"><a href="/password_reset">Reset My Password</a></div>
+        <div class="button"><a href="/delete">Delete My Account</a></div>
+        <div class="button"><a href="/logout">Log out</a></div>
     </div>
 </body>
 </html>

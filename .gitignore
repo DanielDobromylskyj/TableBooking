@@ -5,3 +5,5 @@ users.txt
 secret_key.txt
 certificate.pem
 private_key.pem
+*.booking
+*.booking

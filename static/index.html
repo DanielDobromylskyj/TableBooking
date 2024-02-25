@@ -52,12 +52,27 @@
             text-decoration: none;
             color: #007bff;
         }
+
+        .noSession {
+            background: rgba(250, 0, 0, 0.5);
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #capsLockMessage {
+            color: red;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 <body>
     <div id="login-form">
         <h2>Please Login To Book A Table</h2>
-        <form>
+        <form id="loginForm">
             <div>
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>
@@ -68,11 +83,15 @@
             </div>
             <button type="submit">Login</button>
         </form>
+        <div id="capsLockMessage" class="hidden">Caps Lock is On</div>
+        <div class='noSession' hidden="hidden">
+            <p>Your session has expired, please login</p>
+        </div>
         <div style="padding-top: 10px">
             <a href="/register" style="display: inline; padding-right: 7px">Create Account</a>
             <a href="/password_reset" style="display: inline; padding-left: 7px">Forgot Password</a>
         </div>
     </div>
-    <script src="/static/script.js"></script>
+    <script src="/static/home.js"></script>
 </body>
 </html>

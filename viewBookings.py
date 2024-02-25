@@ -7,13 +7,13 @@ bookings = bookingHandler.Manager()
 
 
 def load(email, name):
-    # Style for the webpage content
     style = """
     <style>
         .headerTitle {
             text-align: center;
-            font-size: 40px;
-            color: white;
+            font-size: 50px;
+            color: black;
+            margin-bottom: 5px;
         }
 
         .header {
@@ -73,25 +73,27 @@ def load(email, name):
             if day_info:
                 bookings_info += f"<div class='booking-day'><p class='date'>{booking_date}</p>{day_info}</div>"
 
-    # Generate HTML content
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Viewing {name}'s Bookings</title>
-        {style}
-    </head>
-    <body>
-        <div class="header">
-            <h2 class="headerTitle">Viewing {name}'s Bookings</h2>
-        </div>
-        <div class="box">
-            {bookings_info}
-        </div>
-    </body>
-    </html>
-    """
+    if bookings_info == "":
+        bookings_info = "<div class='booking-day'><p>You Have No Bookings</p></div>"
 
-    return html_content
+
+    return f"""
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Viewing {name}'s Bookings</title>
+            {style}
+        </head>
+        <body>
+            <div class="box">
+                <h2 class="headerTitle">My Bookings</h2>
+                <p style="margin: 5px; margin-bottom: 10px">UTCN Library</p>
+            </div>
+            <div class="box">
+                {bookings_info}
+            </div>
+        </body>
+        </html>
+        """

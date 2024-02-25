@@ -7,8 +7,9 @@
     <style>
             .headerTitle {
                 text-align: center;
-                font-size: 40px;
-                color: white;
+                font-size: 50px;
+                color: black;
+                margin-bottom: 5px;
             }
 
             .header {
@@ -104,8 +105,9 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="box">
         <h2 class="headerTitle">Table Booking</h2>
+        <p style="margin: 5px; margin-bottom: 10px">UTCN Library</p>
     </div>
 
     <div class="box">
@@ -228,20 +230,26 @@
 
         function loadDay(day, date) {
             if ((day === 0) || (day === 6)) { // Sunday or Saturday
-                document.getElementById("periodSelector").hidden = true;
+                hideAll()
             } else {
 
                 document.getElementById("date").innerHTML = date;
 
                 if (day === 1) { // Monday
-                    generatePeriodBoxes([50, 50, 15, 50, 50, 25, 50, 50, 50]);
+                    generatePeriodBoxes([50, 50, 15, 50, 50, 30, 25, 50, 50]);
                 } else if (day === 5) { // Friday
-                    generatePeriodBoxes([50, 50, 15, 50, 50, 25, 50, 50, 50]);
+                    generatePeriodBoxes([50, 50, 15, 50, 50, 30, 25, 50, 50]);
                 } else { // Tuesday, Wednesday, Thursday
                     generatePeriodBoxes([50, 50, 15, 50, 50, 30, 50, 50, 50]);
                 }
                 document.getElementById("periodSelector").hidden = false;
             }
+        }
+
+        function hideAll() {
+            document.getElementById("periodSelector").hidden = true;
+            document.getElementById("tableSelector").hidden = true;
+            document.getElementById("bookingInfo").hidden = true;
         }
 
         function generatePeriodBoxes(periods) {
@@ -277,7 +285,7 @@
                 } else if (periodLength === 30) {
                     box.innerHTML = '<p>Lunch</p>'
                 } else {
-                    box.innerHTML = '<p>E³</p>'
+                    box.innerHTML = '<p>Form</p>'
                 }
 
                 // Increment period counter if this is a lesson

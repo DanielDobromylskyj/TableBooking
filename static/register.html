@@ -50,6 +50,15 @@
             margin-top: 10px;
             font-weight: bold;
         }
+
+        .hidden {
+            display: none;
+        }
+
+        #capsLockMessage {
+            color: red;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -75,8 +84,32 @@
             <button type="submit">Register</button>
         </form>
         <div id="verification-result"></div>
+        <div id="capsLockMessage" class="hidden">Caps Lock is On</div>
     </div>
-<script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('verification-form');
+
+            // Attach event listener to the form
+            form.addEventListener('keyup', function (event) {
+                var inputFields = form.querySelectorAll('input[type="password"]');
+
+                var setHigh = false;
+                inputFields.forEach(function(inputField) {
+                    var capsLockMessage = document.getElementById('capsLockMessage');
+
+                    if (event.getModifierState && event.getModifierState('CapsLock') && inputField === document.activeElement) {
+                        capsLockMessage.classList.remove('hidden');
+                        setHigh = true;
+                    } else {
+                        if (setHigh === false) {
+                            capsLockMessage.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+        });
+
         document.getElementById('verification-form').addEventListener('submit', async function(event) {
             event.preventDefault();
 
