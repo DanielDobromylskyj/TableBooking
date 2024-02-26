@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <title>Login</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039');
+            background-size: cover;
+            background-position: center;
+        }
+        #login-form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #login-form div {
+            margin-bottom: 10px;
+        }
+        #login-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #login-form input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        #login-form button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        a {
+            display: block;
+            margin-top: 10px;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .noSession {
+            background: rgba(250, 0, 0, 0.5);
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #capsLockMessage {
+            color: red;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="login-form">
+        <h2>Please Login To Book A Table</h2>
+        <form id="loginForm">
+            <div>
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Login</button>
+        </form>
+        <div id="capsLockMessage" class="hidden">Caps Lock is On</div>
+        <div class='noSession' hidden="hidden">
+            <p>Your session has expired, please login</p>
+        </div>
+        <div style="padding-top: 10px">
+            <a href="/register" style="display: inline; padding-right: 7px">Create Account</a>
+            <a href="/password_reset" style="display: inline; padding-left: 7px">Forgot Password</a>
+        </div>
+    </div>
+    <script src="/static/desktop/home.js"></script>
+</body>
+</html>

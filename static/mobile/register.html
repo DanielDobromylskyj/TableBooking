@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039');
+            background-size: cover;
+            background-position: center;
+        }
+        #register-form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 20%;
+        }
+        #register-form div {
+            margin-bottom: 10px;
+        }
+        #register-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #register-form input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        #register-form button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        #verification-result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #capsLockMessage {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="register-form">
+        <h2>Create New Account</h2>
+        <form id="verification-form">
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div>
+                <label for="confirm">Confirm Password:</label>
+                <input type="password" id="confirm" name="confirm" required>
+            </div>
+            <div style="display: inline">
+                <label for="accept_privacy_policy">I agree to the <a href="/privacy_policy">privacy policy</a></label>
+                <input type="checkbox" id="accept_privacy_policy" name="accept_privacy_policy">
+            </div>
+            <button type="submit">Register</button>
+        </form>
+        <div id="verification-result"></div>
+        <div id="capsLockMessage" class="hidden">Caps Lock is On</div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('verification-form');
+
+            // Attach event listener to the form
+            form.addEventListener('keyup', function (event) {
+                var inputFields = form.querySelectorAll('input[type="password"]');
+
+                var setHigh = false;
+                inputFields.forEach(function(inputField) {
+                    var capsLockMessage = document.getElementById('capsLockMessage');
+
+                    if (event.getModifierState && event.getModifierState('CapsLock') && inputField === document.activeElement) {
+                        capsLockMessage.classList.remove('hidden');
+                        setHigh = true;
+                    } else {
+                        if (setHigh === false) {
+                            capsLockMessage.classList.add('hidden');
+                        }
+                    }
+                });
+            });
+        });
+
+        document.getElementById('verification-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm').value;
+
+            const policy = document.getElementById('accept_privacy_policy').checked;
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email, password: password, confirm: confirm, accept_privacy_policy: policy })
+                }).then(response => response.json());
+
+                if (response.message === 'Complete') {
+                    location.href = '/verify-email'
+                } else {
+                    document.getElementById('verification-result').innerText = (response.message);
+                }
+
+            } catch (error) {
+                console.error('Error during registration:', error);
+                document.getElementById('verification-result').innerText = 'Error during registration. Please try again later.';
+            }
+        });
+    </script>
+</body>
+</html>

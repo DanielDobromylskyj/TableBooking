@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039');
+            background-size: cover;
+            background-position: center;
+        }
+        #accountBox {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="accountBox">
+        <h2>Are you sure you want to delete your account?</h2>
+        <p>This will NOT clear your bookings you have made</p>
+        <input type="password" id="password" name="password" placeholder="password">
+        <button onclick="DeleteMyAcc()">Delete</button>
+    </div>
+
+    <script>
+        function DeleteMyAcc() {
+            const password = document.getElementById('password').value;
+
+            const response = fetch('/delete', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: password })
+            });
+
+            alert(response.status);
+        }
+    </script>
+</body>
+</html>

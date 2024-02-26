@@ -9,7 +9,6 @@ import emailHandler
 
 # My Todos
 # todo - Add Mobile Support For Webpages
-# todo - On login / sign up make it say if caps lock is on
 
 
 app = Flask(__name__)
@@ -21,6 +20,18 @@ login_manager.init_app(app)
 
 def unauthorized():
     return redirect(url_for('home', sessionExpired=True))
+
+
+def deviceType(inboundRequest):
+    user_agent_string = inboundRequest.user_agent.string
+    mobile_pattern = re.compile(r'Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini')
+    is_mobile = bool(re.search(mobile_pattern, user_agent_string))
+
+    if is_mobile:
+        return 'mobile'
+    else:
+        return 'desktop'
+
 
 
 login_manager.unauthorized_callback = unauthorized
@@ -114,7 +125,8 @@ def load_user(user_id):
 def home():
     """ Returns the html code in the static/index.html file """
 
-    with open("static/index.html", "r") as f:
+
+    with open(f"static/{deviceType(request)}/index.html", "r") as f:
         html = f.read()
 
         if ('sessionExpired' in request.args) and (request.args['sessionExpired'] == 'True'):
@@ -149,7 +161,7 @@ def passwordReset():
     """ Initial Email Confirmation Page For Resetting A Password """
 
     if request.method == "GET":
-        with open("static/reset_password.html", "r") as f:
+        with open(f"static/{deviceType(request)}/reset_password.html", "r") as f:
             return f.read()
 
     elif request.method == "POST":
@@ -199,14 +211,14 @@ def verify_password_email():
         return {"message": "Valid"}, 200
 
     else:
-        with open("static/verify_email_for_password.html", "r") as f:
+        with open(f"static/{deviceType(request)}/verify_email_for_password.html", "r") as f:
             return f.read()
 
 
 @app.route('/new_password', methods=['POST', 'GET'])
 def new_password():
     if request.method == 'GET':
-        with open('static/new_password.html', 'r') as f:
+        with open(f'static/{deviceType(request)}/new_password.html', 'r') as f:
             return f.read()
 
     else:
@@ -239,7 +251,7 @@ def new_password():
 @login_required
 def deleteMyAccount():
     if request.method == 'GET':
-        with open("static/delete.html", "r") as f:
+        with open(f"static/{deviceType(request)}/delete.html", "r") as f:
             return f.read()
 
     else:
@@ -260,10 +272,10 @@ def deleteMyAccount():
 def dashboard():
     """ Return the respective webpage for the student/teacher dashboard"""
     if current_user.id in adminEmails:
-        with open("static/teacherPortal.html", "r") as f:
+        with open(f"static/{deviceType(request)}/teacherPortal.html", "r") as f:
             return f.read()
 
-    with open("static/dashboard.html", "r") as f:
+    with open(f"static/{deviceType(request)}/dashboard.html", "r") as f:
         return f.read()
 
 
@@ -271,7 +283,7 @@ def dashboard():
 @login_required
 def account():
     """ Return the webpage for the users account settings """
-    with open("static/account.html", "r") as f:
+    with open(f"static/{deviceType(request)}/account.html", "r") as f:
         return f.read().replace("@@@USEREMAIL@@@", current_user.id)
 
 
@@ -295,15 +307,20 @@ def extractName(email):
 @login_required
 def myBookings():
     """ Create a webpage to display the booking data """
-    return viewBookings.load(
-        current_user.id, extractName(current_user.id)
-    )
+    if deviceType(request) == "desktop":
+        return viewBookings.desktop(
+            current_user.id, extractName(current_user.id)
+        )
+    else:
+        return viewBookings.mobile(
+            current_user.id, extractName(current_user.id)
+        )
 
 
 @app.route('/book')
 @login_required
 def bookATable():
-    with open("static/book.html", "r") as f:
+    with open(f"static/{deviceType(request)}/book.html", "r") as f:
         return f.read()
 
 
@@ -388,13 +405,13 @@ def register():
         # Redirect to a page for email verification
         return {'message': 'Complete'}
 
-    with open('static/register.html', "r") as f:
+    with open(f'static/{deviceType(request)}/register.html', "r") as f:
         return f.read()
 
 
 @app.route('/verify-email')
 def verify_email():
-    with open("static/verify_email.html", "r") as f:
+    with open(f"static/{deviceType(request)}/verify_email.html", "r") as f:
         return f.read()
 
 
@@ -416,7 +433,7 @@ def verify_email_code():
 
 @app.route("/privacy_policy")
 def policy():
-    with open("static/privacy_policy.html", "r") as f:
+    with open(f"static/{deviceType(request)}/privacy_policy.html", "r") as f:
         return f.read()
 
 

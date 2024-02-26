@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://utcn.s3.amazonaws.com/uploads/home_header/2_6_m.jpg?t=1683110039');
+            background-size: cover;
+            background-position: center;
+        }
+        #verification-form {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        #verification-form div {
+            margin-bottom: 10px;
+        }
+        #verification-form label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #verification-form input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        #verification-form button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        #verification-result {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="verification-form">
+        <h2>Email Verification</h2>
+        <p>Please enter the verification code you received via email:</p>
+        <form id="verification-form">
+            <div>
+                <label for="verification-code">Verification Code:</label>
+                <input type="text" id="verification-code" name="verification_code" required>
+            </div>
+            <button type="submit">Verify</button>
+        </form>
+        <div id="verification-result"></div>
+    </div>
+
+    <script>
+        document.getElementById('verification-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const verificationCode = document.getElementById('verification-code').value;
+
+            try {
+                const response = await fetch('/verify-email-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ verification_code: verificationCode })
+                });
+
+                const result = await response.json();
+                console.log(result['message'])
+                if (response.ok) {
+                    document.getElementById('verification-result').innerText = result['message'];
+
+                    if (result['message'] === "Verified!") {
+                        location.href = '/';
+                    }
+
+                } else {
+                    document.getElementById('verification-result').innerText = 'Verification failed. Please try again.';
+                }
+            } catch (error) {
+                console.error('Error during verification:', error);
+                document.getElementById('verification-result').innerText = 'An error occurred during verification. Please try again later.';
+            }
+        });
+    </script>
+</body>
+</html>
