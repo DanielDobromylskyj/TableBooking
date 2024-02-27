@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Booking Editor</title>
+</head>
+<body>
+    <div id="title">
+        <h2>Advanced Booking Editor</h2>
+    </div>
+    <hr>
+    <div id="tools">
+        <label>Booked By</label>
+        <input type="text" value="*" placeholder="email" id="bookedBy">
+        <label>Booked For</label>
+        <input type="text" value="*" placeholder="email" id="bookedFor">
+        <label>Booked Before</label>
+        <input type="text" value="*" placeholder="yyyy-mm-dd" style="width: 80px;" id="bookedBefore">
+        <label>Teacher</label>
+        <input type="text" value="*" placeholder="F Surname" id="teacher">
+        <label>Task</label>
+        <input type="text" value="*" id="task">
+        <label>Period</label>
+        <input type="text" value="*" style="width: 50px" id="period">
+        <label>Table</label>
+        <input type="text" value="*" style="width: 50px" id="table">
+        <label>Booked (y/n)</label>
+        <input type="text" value="y" style="width: 50px" id="booked">
+        <label>Max Results</label>
+        <input type="text" value="10" style="width: 50px" id="maxResults">
+        <button onclick="search()">Search</button>
+    </div>
+    <hr>
+    <div id="searchList"></div>
+
+    <script>
+        function get(id) {
+            return id + "=" + document.getElementById(id).value;
+        }
+        function search() {
+            // Send Request
+            fetch('/searchDB?' + get("bookedBy") + "&" + get("bookedFor") + "&" + get("bookedBefore") + "&" + get("teacher") + "&" + get("task") + "&" + get("period") + "&" + get("table") + "&" + get("booked") + "&" + get("maxResults"))
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                })
+                .then(data => {
+                    displaySearchResult(data);
+                })
+                .catch(error => {
+                    alert("An Internal Error Has Occurred");
+            });
+        }
+
+        function deleteFromServer(id) {
+            fetch('/deleteFromDB?' + get("bookedBy") + "&" + get("bookedFor") + "&" + get("bookedBefore") + "&" + get("teacher") + "&" + get("task") + "&" + get("period") + "&" + get("table") + "&" + get("booked") + "&" + get("maxResults") + "&id=" + id)
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                })
+                .then(data => {
+                    if (data.message === "True") {
+                        alert("Booking Has Been Removed");
+                        search();
+                    } else {
+                        alert("Server Failed To Remove Booking...");
+                    }
+                })
+                .catch(error => {
+                    alert("An Internal Error Has Occurred");
+            });
+        }
+
+        function displaySearchResult(results) {
+            document.getElementById("searchList").innerHTML = "";
+
+            var id = 0;
+            results.forEach((result) => {
+                let container = document.createElement("div");
+
+                let task = document.createElement("h3");
+                task.innerText = ("Task: " + result['task']);
+                container.appendChild(task);
+
+                let tableNPeriod = document.createElement("p");
+                tableNPeriod.innerText = ("Period " + result['period'] + " Table " + result["table"]);
+                container.appendChild(tableNPeriod);
+
+                let teacher = document.createElement("p");
+                teacher.innerText = ("Teacher: " + result['teacher']);
+                container.appendChild(teacher);
+
+                let booker = document.createElement("p");
+                booker.innerText = ("Booked By: " + result['bookedBy']);
+                container.appendChild(booker);
+
+                result['students'].forEach((student) => {
+                    let studentP = document.createElement("p");
+                    studentP.innerText = ("Student: " + student);
+                    container.appendChild(studentP);
+                });
+
+                let date = document.createElement("p");
+                date.innerText = "Date: " + result['timeBooked'];
+                container.appendChild(date);
+
+
+
+                let deleteButton = document.createElement("button");
+                deleteButton.innerText = "Delete Booking";
+                deleteButton.onclick = deleteBooking;
+                deleteButton.setAttribute("bookingID", id);
+                container.appendChild(deleteButton);
+
+                // Append To Body
+                document.getElementById("searchList").appendChild(container);
+                document.getElementById("searchList").appendChild(document.createElement("hr"));
+                id ++;
+            });
+        }
+
+        function deleteBooking(clickEvent) {
+            const id = clickEvent.srcElement.attributes[0].value;
+            deleteFromServer(id)
+        };
+
+    </script>
+
+</body>
+</html>

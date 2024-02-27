@@ -8,9 +8,10 @@
     <style>
         .headerTitle {
                 text-align: center;
-                font-size: 40px;
-                color: white;
-        }
+                font-size: 50px;
+                color: black;
+                margin-bottom: 5px;
+            }
 
         .header {
             background-color: purple;
@@ -37,6 +38,16 @@
             margin-top: 20px;
         }
 
+        .advancedBox {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            width: 10%;
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
         body {
             margin: 0px;
             padding: 0px;
@@ -47,12 +58,44 @@
             padding-top: 10%;
             padding-bottom: 10%;
         }
+
+        .table-info {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center; /* Center the form content */
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            width: 60%;
+            margin: 0 auto;
+            margin-top: 10px;
+        }
     </style>
+</head>
+<body>
+    <div class="box">
+        <h2 class="headerTitle">Teacher Portal</h2>
+        <p style="margin: 5px; margin-bottom: 10px">UTCN Library</p>
+    </div>
+    <div class="box">
+        <p id="date"></p>
+        <p id="period"></p>
+    </div>
+    <div class="bookings"></div>
+
+    <div class="advancedBox">
+        <a href="/advancedDashboard">Edit Bookings</a>
+    </div>
+    <br>
+    <div class="logoutBox">
+        <a href="/logout">Logout</a>
+    </div>
 
     <script>
+        var selectedDate = null;
+
         function updatePeriodOverview() {
-            var date = document.getElementById("date").value;
-            var period = document.getElementById("period").value;
+            var date = selectedDate;
+            var period = getPeriod();
 
             fetch("/getPeriodOverview", {
                 method: "POST",
@@ -70,7 +113,6 @@
             })
             .catch(error => console.log('Error:', error));
         }
-
         function displayPeriodOverview(periodOverview) {
             var bookingsDiv = document.querySelector('.bookings');
             bookingsDiv.innerHTML = ""; // Clear previous content
@@ -110,35 +152,83 @@
                 }
             }
         }
-    </script>
-    <style>
-        .table-info {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center; /* Center the form content */
-            background-color: rgba(255, 255, 255, 0.8);
-            border-radius: 10px;
-            width: 60%;
-            margin: 0 auto;
-            margin-top: 10px;
+
+        function formatDate(date) {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+            const dayOfWeek = days[date.getDay()];
+            const dayOfMonth = date.getDate();
+            const month = months[date.getMonth()];
+
+            // Add the suffix to the day of the month
+            let suffix;
+            switch (dayOfMonth) {
+                case 1:
+                case 21:
+                case 31:
+                    suffix = 'st';
+                    break;
+                case 2:
+                case 22:
+                    suffix = 'nd';
+                    break;
+                case 3:
+                case 23:
+                    suffix = 'rd';
+                    break;
+                default:
+                    suffix = 'th';
+            }
+
+            return `${dayOfWeek} ${dayOfMonth}${suffix} ${month}`;
         }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h2 class="headerTitle">UTCN Library Overview</h2>
-    </div>
-    <div class="box">
-        <label for="date">Date:</label>
-        <input type="date" id="date" required>
-        <label for="period">Period:</label>
-        <input type="number" id="period" min="1" max="10" required>
-        <button onclick="updatePeriodOverview()">Update</button>
-    </div>
-    <div class="bookings"></div>
-    <br>
-    <div class="logoutBox">
-        <a href="/logout">Logout</a>
-    </div>
+
+        function getPeriod() {
+            const today = new Date();
+            const day = today.getDate().toString().padStart(2, '0');
+            const minutesToday = (today.getHours() * 60) + today.getMinutes();
+
+            if (day === 1) { // Monday
+                if ((540 < minutesToday) && (minutesToday < 590)) {return 1}
+                if ((590 < minutesToday) && (minutesToday < 640)) {return 2}
+                if ((655 < minutesToday) && (minutesToday < 705)) {return 3}
+                if ((705 < minutesToday) && (minutesToday < 755)) {return 4}
+                if ((785+25 < minutesToday) && (minutesToday < 835+25)) {return 5}
+                if (835+25 < minutesToday) {return 6}
+            } else if (day === 5) { // Friday
+                if ((540 < minutesToday) && (minutesToday < 590)) {return 1}
+                if ((590 < minutesToday) && (minutesToday < 640)) {return 2}
+                if ((655 < minutesToday) && (minutesToday < 705)) {return 3}
+                if ((705 < minutesToday) && (minutesToday < 755)) {return 4}
+                if ((785+25 < minutesToday) && (minutesToday < 835+25)) {return 5}
+                if (835+25 < minutesToday) {return 6}
+            } else {
+                if ((540 < minutesToday) && (minutesToday < 590)) {return 1}
+                if ((590 < minutesToday) && (minutesToday < 640)) {return 2}
+                if ((655 < minutesToday) && (minutesToday < 705)) {return 3}
+                if ((705 < minutesToday) && (minutesToday < 755)) {return 4}
+                if ((785 < minutesToday) && (minutesToday < 835)) {return 5}
+                if ((835 < minutesToday) && (minutesToday < 885)) {return 6}
+                if (885 < minutesToday) {return 7}
+            }
+
+            return -1
+        }
+
+        function updateDisplay() {
+            let today = new Date();
+            let year = today.getFullYear();
+            let month = (today.getMonth() + 1).toString().padStart(2, '0'); // Adding 1 to month since it's zero-based
+            let day = today.getDate().toString().padStart(2, '0');
+            selectedDate = year + "-" + month + "-" + day;
+            document.getElementById("date").innerText = formatDate(today);
+            document.getElementById("period").innerText = 'Period ' + getPeriod();
+            updatePeriodOverview()
+        }
+
+        updateDisplay()
+        setInterval(updateDisplay, 1000 * 60); // Update every minute
+    </script>
 </body>
 </html>

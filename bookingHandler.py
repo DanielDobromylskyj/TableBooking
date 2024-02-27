@@ -1,6 +1,7 @@
 import os, time
 import datetime
 
+
 class Manager:
     def __init__(self):
         self.numberOfTables = 10
@@ -21,7 +22,6 @@ class Manager:
             if (todaysDate.weekday() != 5) and (todaysDate.weekday() != 6):  # not Sat/Sun
                 self.createEmptyBookings(todaysDate.strftime('%Y-%m-%d'))
 
-
         if date == self.currentLoadedDate:
             return
         else:
@@ -35,7 +35,7 @@ class Manager:
 
             table = None
             self.loadedBookings = {
-                str(i+1): {} for i in range(7)
+                str(i + 1): {} for i in range(7)
             }
 
             for chunk in fileData:
@@ -74,14 +74,14 @@ class Manager:
         weekday = datetime.datetime.strptime(date, '%Y-%m-%d').weekday()
 
         periods = 7
-        if (weekday == 0) or (weekday == 4): # Monday / Friday
+        if (weekday == 0) or (weekday == 4):  # Monday / Friday
             periods = 6
 
         saveData = ""
 
         for periodID in range(periods):
             for tableID in range(self.numberOfTables):
-                saveData += (f"META,{periodID+1}|{tableID+1}\n"
+                saveData += (f"META,{periodID + 1}|{tableID + 1}\n"
                              f"booked,False\n"
                              f"bookedBy, \n"
                              f"timeBooked,\n"
@@ -91,22 +91,19 @@ class Manager:
         with open(f"bookings/{date}.booking", "w") as f:
             f.write(saveData)
 
-
-
     def tableFree(self, period, table):
         return self.loadedBookings[period][table]["booked"]
 
     def bookTable(self, period, table, by, students, task, teacher):
         self.loadedBookings[period][table] = {
-                "students": students,
-                "booked": "True",
-                "bookedBy": by,
-                "timeBooked": time.strftime("%H:%M %d/%m/%Y"),
-                "task": task,
-                "teacher": teacher
+            "students": students,
+            "booked": "True",
+            "bookedBy": by,
+            "timeBooked": time.strftime("%H:%M %d/%m/%Y"),
+            "task": task,
+            "teacher": teacher
         }
         self.save()
-
 
     def createBooking(self, date: str, period: str, table, by, otherStudents, task, teacher):
         try:
@@ -116,7 +113,7 @@ class Manager:
 
         # userData < today-1
         if datetime.datetime.strptime(date, '%Y-%m-%d').date() <= (
-                    datetime.datetime.now().date() - datetime.timedelta(days=1)):
+                datetime.datetime.now().date() - datetime.timedelta(days=1)):
             return "Please select a current or future date"
 
         if period.isdigit() == False:
@@ -142,17 +139,22 @@ class Manager:
             if len(self.getBookingsFor(email, date)) >= 2:
                 return "A student already has 2 bookings for today"
 
+            if len(email) > 40:
+                return "A student email is too long"
+
         if self.tableFree(period, table):
             otherStudents.append(by)
             self.bookTable(period, table, by, otherStudents, task, teacher)
             return "You have now booked a table"
 
-        return "This Table Is Already Taken"
+        if len(task) > 70:
+            return "A student email is too long"
 
+        return "This Table Is Already Taken"
 
     def getPeriodData(self, date, period):
         if datetime.datetime.strptime(date, '%Y-%m-%d').date() <= (
-                    datetime.datetime.now().date() - datetime.timedelta(days=1)):
+                datetime.datetime.now().date() - datetime.timedelta(days=1)):
             return {}, 422
 
         try:
@@ -164,17 +166,15 @@ class Manager:
             return {}, 422
 
         return {
-            str(i+1): self.loadedBookings[period][str(i+1)]["booked"] for i in range(self.numberOfTables)
+            str(i + 1): self.loadedBookings[period][str(i + 1)]["booked"] for i in range(self.numberOfTables)
         }
-
 
     def getTeacherPeriodData(self, date, period):
         try:
             self.loadBooking(date)
         except:
             return {}, 422
-        return self.loadedBookings[period]
-
+        return self.loadedBookings[str(period)]
 
     def getBookingsFor(self, student, date):
         try:
@@ -189,7 +189,6 @@ class Manager:
                     found.append([periodID, tableID])
 
         return found
-
 
     def save(self):
         saveData = ""
@@ -212,3 +211,86 @@ class Manager:
             with open(f"bookings/{self.currentLoadedDate}.booking", "w") as f:
                 f.write(saveData)
 
+    def SearchDatabase(self, args, delete=False):
+        self.save()
+
+        # The Search
+        results = []
+        validResponses = 0
+        for filepath in os.listdir("bookings"):
+            date = filepath.split(".booking")[0]
+
+            wantsToSearchThisDate = (args['bookedBefore'] == "*") or (args['bookedBefore'] == "")
+
+            if wantsToSearchThisDate == False:
+                wantsToSearchThisDate = (datetime.datetime.strptime(date, '%Y-%m-%d').date() < datetime.datetime.strptime(args['bookedBefore'],
+                                                                '%Y-%m-%d').date())
+
+
+            if wantsToSearchThisDate:
+                self.loadBooking(date)
+
+                for period in self.loadedBookings:
+                    if (args['period'] != "") and (args['period'] != "*"):
+                        if args['period'] != period:
+                            continue
+
+                    for tableID in self.loadedBookings[period]:
+                        if (args['table'] != "") and (args['table'] != "*"):
+                            if args['table'] != tableID:
+                                continue
+
+                        table = self.loadedBookings[period][tableID]
+
+                        if (args['bookedBy'] != "*") and (args['bookedBy'] != table['bookedBy']):
+                            continue
+
+                        if (args['bookedFor'] != "*") and (args['bookedFor'] not in table['students']):
+                            continue
+
+                        if (args['booked'] == "y") and (table["booked"] != "True"):
+                            continue
+
+                        if (args['booked'] == "n") and (table["booked"] == "True"):
+                            continue
+
+                        if (args['teacher'] != "*") and (args['teacher'] != table["teacher"]):
+                            continue
+
+                        if (args['task'] != "*") and (args['task'] not in table["task"]):
+                            continue
+
+                        if delete:
+                            if int(args['id']) == validResponses:  # Delete this one
+                                self.loadedBookings[period][tableID] = {
+                                    "students": [],
+                                    "booked": False,
+                                    "bookedBy": " ",
+                                    "timeBooked": " ",
+                                    "task": " ",
+                                    "teacher": " ",
+                                }
+                                self.save()
+                                return True
+
+                        results.append(table)
+                        results[-1]["period"] = period
+                        results[-1]["table"] = tableID
+
+                        validResponses += 1
+
+        if delete:
+            return False
+
+        # Return Results
+        if args['maxResults'] != "*":
+            if len(results) > int(args['maxResults']):
+                return results[:int(args['maxResults'])]
+        return results
+
+    def DeleteFromDatabase(self, args):
+        return {
+            "message": str(
+                self.SearchDatabase(args, delete=True)
+            )
+        }

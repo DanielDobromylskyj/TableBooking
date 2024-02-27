@@ -4,11 +4,12 @@ import re, random, string, secrets, time
 import bcrypt
 
 import viewBookings
-
 import emailHandler
 
-# My Todos
-# todo - Add Mobile Support For Webpages
+# Todo list
+# TODO - Advanced Booking Editor - Allow Export To CSV
+# TODO - Advanced Booking Editor
+
 
 
 app = Flask(__name__)
@@ -183,7 +184,7 @@ def passwordReset():
             return redirect(url_for('verify_password_email', _method="GET", auth=auth))
 
         else:
-            "An Error Has Occurred During Code Creation"
+            return "An Error Has Occurred During Code Creation"
 
     else:
         return "Bad Method"
@@ -277,6 +278,30 @@ def dashboard():
 
     with open(f"static/{deviceType(request)}/dashboard.html", "r") as f:
         return f.read()
+
+@app.route('/advancedDashboard')
+@login_required
+def advancedDashboard():
+    """ Return the respective webpage for the student/teacher dashboard"""
+    if current_user.id in adminEmails:
+        with open(f"static/{deviceType(request)}/advancedEdit.html", "r") as f:
+            return f.read()
+
+@app.route('/searchDB')
+@login_required
+def searchDB():
+    """ Return the respective webpage for the student/teacher dashboard"""
+    if current_user.id in adminEmails:
+        return viewBookings.bookings.SearchDatabase(request.args)
+    return {"message": "You do not have permission to use this api"}
+
+@app.route('/deleteFromDB')
+@login_required
+def deleteFromDB():
+    """ Return the respective webpage for the student/teacher dashboard"""
+    if current_user.id in adminEmails:
+        return viewBookings.bookings.DeleteFromDatabase(request.args)
+    return {"message": "You do not have permission to use this api"}
 
 
 @app.route('/account')
