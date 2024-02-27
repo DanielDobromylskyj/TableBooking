@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, jsonify
+from flask import Flask, request, redirect, url_for, jsonify, send_file
 from flask_login import LoginManager, current_user, UserMixin, login_user, logout_user, login_required
 import re, random, string, secrets, time
 import bcrypt
@@ -301,6 +301,18 @@ def deleteFromDB():
     """ Return the respective webpage for the student/teacher dashboard"""
     if current_user.id in adminEmails:
         return viewBookings.bookings.DeleteFromDatabase(request.args)
+    return {"message": "You do not have permission to use this api"}
+
+@app.route('/downloadSearch')
+@login_required
+def downloadSearch():
+    """ Return the respective webpage for the student/teacher dashboard"""
+    if current_user.id in adminEmails:
+        response = viewBookings.bookings.downloadSearch(request.args)
+        if type(response) == str:
+            return send_file(response, as_attachment=True)
+        else:
+            return response
     return {"message": "You do not have permission to use this api"}
 
 

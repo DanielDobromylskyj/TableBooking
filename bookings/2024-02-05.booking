@@ -71,13 +71,11 @@ timeBooked,
 task,
 teacher,
 META,2|3
-booked,True
-bookedBy,u21ddobromylskyj@utcncst.org
-timeBooked,07:45 05/02/2024
-task,Testing
-teacher,Me
-STUDENT,u21SomeOne@utcncst.org
-STUDENT,u21ddobromylskyj@utcncst.org
+booked,False
+bookedBy, 
+timeBooked, 
+task, 
+teacher, 
 META,2|4
 booked,False
 bookedBy, 
@@ -97,13 +95,11 @@ timeBooked,
 task,
 teacher,
 META,2|7
-booked,True
-bookedBy,u21rclarke@utcncst.org
-timeBooked,10:25 05/02/2024
-task,kgchkg
-teacher,gykcgy=k
-STUDENT,cgk
-STUDENT,u21rclarke@utcncst.org
+booked,False
+bookedBy, 
+timeBooked, 
+task, 
+teacher, 
 META,2|8
 booked,False
 bookedBy, 

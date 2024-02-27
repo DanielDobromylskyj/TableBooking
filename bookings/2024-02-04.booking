@@ -161,13 +161,11 @@ timeBooked,
 task,
 teacher,
 META,3|8
-booked,True
-bookedBy,u21ddobromylskyj@utcncst.org
-timeBooked,20:09 03/02/2024
-task,MyTask
-teacher,MyTeacher
-STUDENT,someone@email.com
-STUDENT,u21ddobromylskyj@utcncst.org
+booked,False
+bookedBy, 
+timeBooked, 
+task, 
+teacher, 
 META,3|9
 booked,False
 bookedBy, 

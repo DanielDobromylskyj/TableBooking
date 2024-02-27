@@ -30,6 +30,7 @@
         <label>Max Results</label>
         <input type="text" value="10" style="width: 50px" id="maxResults">
         <button onclick="search()">Search</button>
+        <button onclick="download('csv')">Download To CSV</button>
     </div>
     <hr>
     <div id="searchList"></div>
@@ -108,7 +109,6 @@
                 container.appendChild(date);
 
 
-
                 let deleteButton = document.createElement("button");
                 deleteButton.innerText = "Delete Booking";
                 deleteButton.onclick = deleteBooking;
@@ -127,7 +127,10 @@
             deleteFromServer(id)
         };
 
-    </script>
+        function download(type) {
+            location.href = '/downloadSearch?' + get("bookedBy") + "&" + get("bookedFor") + "&" + get("bookedBefore") + "&" + get("teacher") + "&" + get("task") + "&" + get("period") + "&" + get("table") + "&" + get("booked") + "&" + get("maxResults") + "&type=" + type
+        }
 
+    </script>
 </body>
 </html>

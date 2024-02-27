@@ -1,4 +1,6 @@
 import os, time
+import random
+import string
 import datetime
 
 
@@ -294,3 +296,30 @@ class Manager:
                 self.SearchDatabase(args, delete=True)
             )
         }
+
+    def tempPath(self, extension):
+        return f"temp/{''.join(random.choices(string.digits, k=10))}.{extension}"
+
+    def downloadSearch(self, args):
+        fileType = args['type']
+
+        if fileType == 'csv':
+            path = self.tempPath("csv")
+            data = self.SearchDatabase(args)
+            self.saveToCSV(path, data)
+            return path
+        else:
+            return {"error": "invalid type"}, 422
+
+
+    def saveToCSV(self, path, data):
+        rawCSV = "table,period,booked,task,teacher,bookedBy,student1,student2,student3,student4,timeBooked\n"
+
+        for record in data:
+            rawCSV += (f"{record['table']},{record['period']},{record['booked']},"
+                       f"{record['task'].replace(',', '.')},{record['teacher']},{record['bookedBy']},"
+                       f"{','.join(record['students']) + (',' + ('None,' * (4 - len(record['students']))))}"
+                       f"{record['timeBooked']}\n")
+
+        with open(path, "w") as f:
+            f.write(rawCSV)
