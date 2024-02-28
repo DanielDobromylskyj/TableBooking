@@ -7,8 +7,6 @@ import viewBookings
 import emailHandler
 
 # Todo list
-# TODO - Advanced Booking Editor - Allow Export To CSV
-# TODO - Advanced Booking Editor
 
 
 
