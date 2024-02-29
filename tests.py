@@ -2,17 +2,17 @@ import requests
 import socket
 
 import urllib3
+
 urllib3.disable_warnings()
+
 
 def getURL():
     return 'https://' + socket.gethostbyname(socket.gethostname()) + ":443"
 
 
 def testRegister():
-    url = getURL() + "/register"
-
     tests = [
-        [{  # Fully Valid (Bar email but should pass checks
+        [{  # Fully Valid (Bar email but should pass checks)
             "email": "user@utcncst.org",
             "password": "password",
             "confirm": "password",
@@ -75,8 +75,6 @@ def testRegister():
             print("FAILED:\n", Json, '\n', Response)
 
 
-
-
 def singleRegisterTest(validJson, wantedResponse):
     url = getURL() + "/register"
 
@@ -94,8 +92,9 @@ def singleRegisterTest(validJson, wantedResponse):
         return r['message'] == wantedResponse
 
 
+def testAll():
+    testRegister()
 
 
-
-
-testRegister()
+if __name__ == "__main__":
+    testAll()

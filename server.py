@@ -7,7 +7,8 @@ import viewBookings
 import emailHandler
 
 # Todo list
-
+# Todo - tests.py
+# Todo - Client testing (?)
 
 
 app = Flask(__name__)
@@ -269,7 +270,7 @@ def deleteMyAccount():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    """ Return the respective webpage for the student/teacher dashboard"""
+    """ Return the respective webpage for the student/teacher dashboard """
     if current_user.id in adminEmails:
         with open(f"static/{deviceType(request)}/teacherPortal.html", "r") as f:
             return f.read()
@@ -280,7 +281,7 @@ def dashboard():
 @app.route('/advancedDashboard')
 @login_required
 def advancedDashboard():
-    """ Return the respective webpage for the student/teacher dashboard"""
+    """ Returns advanced table booking view webpage if user is a valid teacher """
     if current_user.id in adminEmails:
         with open(f"static/{deviceType(request)}/advancedEdit.html", "r") as f:
             return f.read()
@@ -288,7 +289,7 @@ def advancedDashboard():
 @app.route('/searchDB')
 @login_required
 def searchDB():
-    """ Return the respective webpage for the student/teacher dashboard"""
+    """ Returns results of a search of all table bookings in the database if authorised by a valid admin / teacher """
     if current_user.id in adminEmails:
         return viewBookings.bookings.SearchDatabase(request.args)
     return {"message": "You do not have permission to use this api"}
@@ -296,7 +297,7 @@ def searchDB():
 @app.route('/deleteFromDB')
 @login_required
 def deleteFromDB():
-    """ Return the respective webpage for the student/teacher dashboard"""
+    """ Deletes a given booking from the data abase if authorised by a valid admin / teacher """
     if current_user.id in adminEmails:
         return viewBookings.bookings.DeleteFromDatabase(request.args)
     return {"message": "You do not have permission to use this api"}
@@ -304,7 +305,7 @@ def deleteFromDB():
 @app.route('/downloadSearch')
 @login_required
 def downloadSearch():
-    """ Return the respective webpage for the student/teacher dashboard"""
+    """ Creates a file for downloading that contains table booking information from the last search """
     if current_user.id in adminEmails:
         response = viewBookings.bookings.downloadSearch(request.args)
         if type(response) == str:
