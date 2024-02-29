@@ -1,7 +1,12 @@
 from flask import Flask, request, redirect, url_for, jsonify, send_file
 from flask_login import LoginManager, current_user, UserMixin, login_user, logout_user, login_required
-import re, random, string, secrets, time
+import re
+import random
+import string
+import secrets
+import time
 import bcrypt
+import socket
 
 import viewBookings
 import emailHandler
@@ -22,6 +27,9 @@ def unauthorized():
     return redirect(url_for('home', sessionExpired=True))
 
 
+login_manager.unauthorized_callback = unauthorized
+
+
 def deviceType(inboundRequest):
     user_agent_string = inboundRequest.user_agent.string
     mobile_pattern = re.compile(r'Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini')
@@ -32,9 +40,6 @@ def deviceType(inboundRequest):
     else:
         return 'desktop'
 
-
-
-login_manager.unauthorized_callback = unauthorized
 
 awaitingVerification = []
 passwordResetting = {}
@@ -51,32 +56,32 @@ def Hash(password):
     return bcrypt.hashpw(password.encode(), salt).hex()
 
 
-def verifyPassword(password, hash):
-    return bcrypt.checkpw(password.encode(), bytes.fromhex(hash))
+def verifyPassword(password, passwordHash):
+    return bcrypt.checkpw(password.encode(), bytes.fromhex(passwordHash))
 
 
 MIN_PASSWORD_LENGTH = 6
-SPECAL_CHARS = list("!\"£$%^&*()_+-={}[]@~:;'#?><,./\\|¬`")
+SPECIALCHARS = list("!\"£$%^&*()_+-={}[]@~:;'#?><,./\\|¬`")
 
 
 def PasswordSecure(password):
     if len(password) < MIN_PASSWORD_LENGTH:
         return "Password Too Short"
 
-    hasNumber = False
+    containsNumber = False
     for char in list(password):
         if char.isdigit():
-            hasNumber = True
+            containsNumber = True
 
-    if hasNumber == False:
+    if not containsNumber:
         return "No Numeric Values"
 
-    hasSpecalChar = False
+    hasSpecialChar = False
     for char in list(password):
-        if char in SPECAL_CHARS:
-            hasSpecalChar = True
+        if char in SPECIALCHARS:
+            hasSpecialChar = True
 
-    if hasSpecalChar == False:
+    if not hasSpecialChar:
         return "No Special Character"
 
     return True
@@ -86,8 +91,8 @@ def updatePassword(email, password):
     global users
     users[email] = password
 
-    with open("users.txt", "w") as f:
-        f.write("\n".join([
+    with open("users.txt", "w") as usersFile:
+        usersFile.write("\n".join([
             f"{email},{users[email]}" for email in users
         ]) + "\n")
 
@@ -96,15 +101,15 @@ def deleteAccount(email):
     global users
     users.pop(email)
 
-    with open("users.txt", "w") as f:
-        f.write("\n".join([
+    with open("users.txt", "w") as usersFile:
+        usersFile.write("\n".join([
             f"{email},{users[email]}" for email in users
         ]) + "\n")
 
 
 def createAccount(email, password):
-    with open("users.txt", "a") as f:
-        f.write(f"{email},{password}\n")
+    with open("users.txt", "a") as usersFile:
+        usersFile.write(f"{email},{password}\n")
 
     global users
     users[email] = password
@@ -124,7 +129,6 @@ def load_user(user_id):
 @app.route('/', methods=['GET', 'POST'])
 def home():
     """ Returns the html code in the static/index.html file """
-
 
     with open(f"static/{deviceType(request)}/index.html", "r") as f:
         html = f.read()
@@ -229,7 +233,7 @@ def new_password():
         if auth not in passwordResetting:
             return jsonify({"message": "Failed to change password"}), 422
 
-        if passwordResetting[auth]['verified'] != True:
+        if not passwordResetting[auth]['verified']:
             return jsonify({"message": "Failed to change password"}), 422
 
         if password != confirm:
@@ -237,7 +241,7 @@ def new_password():
 
         result = PasswordSecure(password)
 
-        if result == True:
+        if result:
             email = passwordResetting[auth]['email']
             updatePassword(email, Hash(password))
 
@@ -250,6 +254,7 @@ def new_password():
 @app.route('/delete', methods=['GET', 'POST'])
 @login_required
 def deleteMyAccount():
+    """ Deletes a users account from the system, assuming that there password matches the stored hash """
     if request.method == 'GET':
         with open(f"static/{deviceType(request)}/delete.html", "r") as f:
             return f.read()
@@ -278,6 +283,7 @@ def dashboard():
     with open(f"static/{deviceType(request)}/dashboard.html", "r") as f:
         return f.read()
 
+
 @app.route('/advancedDashboard')
 @login_required
 def advancedDashboard():
@@ -285,6 +291,7 @@ def advancedDashboard():
     if current_user.id in adminEmails:
         with open(f"static/{deviceType(request)}/advancedEdit.html", "r") as f:
             return f.read()
+
 
 @app.route('/searchDB')
 @login_required
@@ -294,6 +301,7 @@ def searchDB():
         return viewBookings.bookings.SearchDatabase(request.args)
     return {"message": "You do not have permission to use this api"}
 
+
 @app.route('/deleteFromDB')
 @login_required
 def deleteFromDB():
@@ -302,13 +310,14 @@ def deleteFromDB():
         return viewBookings.bookings.DeleteFromDatabase(request.args)
     return {"message": "You do not have permission to use this api"}
 
+
 @app.route('/downloadSearch')
 @login_required
 def downloadSearch():
     """ Creates a file for downloading that contains table booking information from the last search """
     if current_user.id in adminEmails:
         response = viewBookings.bookings.downloadSearch(request.args)
-        if type(response) == str:
+        if type(response) is str:
             return send_file(response, as_attachment=True)
         else:
             return response
@@ -335,7 +344,7 @@ def periodOverview():
 def extractName(email):
     try:
         return email[3:].split("@")[0]
-    except:
+    except IndexError:
         return "Bad Email"
 
 
@@ -376,7 +385,7 @@ def createBooking():
 
     r = viewBookings.bookings.createBooking(args["date"], args["period"], args["table"], current_user.id,
                                             args["students"], args["taskName"], args["teacher"])
-    return {"message": str("Internal Booking System Did Not Respond" if r == None else r)}
+    return {"message": str("Internal Booking System Did Not Respond" if r is None else r)}
 
 
 @app.route('/logout')
@@ -408,10 +417,10 @@ def register():
         if 'accept_privacy_policy' not in request.json:
             return {'message': 'You have not agreed to the privacy policy'}
 
-        if (request.json['accept_privacy_policy'] != True):
+        if not request.json['accept_privacy_policy']:
             return {'message': 'You have not agreed to the privacy policy'}
 
-        if ("," in email):  # We don't need to check in the password as it is stored in HEX (Hashed)
+        if "," in email:  # We don't need to check in the password as it is stored in HEX (Hashed)
             return {'message': 'Comma in email, Please remove it.'}
 
         # Validate email format and domain
@@ -424,7 +433,7 @@ def register():
 
         result = PasswordSecure(password)
 
-        if result == False:
+        if not result:
             return {'message': result}
 
         # Generate verification code
@@ -447,12 +456,14 @@ def register():
 
 @app.route('/verify-email')
 def verify_email():
+    """ Servers the verify-email webpage for a given device"""
     with open(f"static/{deviceType(request)}/verify_email.html", "r") as f:
         return f.read()
 
 
 @app.route('/verify-email-code', methods=["POST"])
 def verify_email_code():
+    """ Validates the verification code sent to users email """
     code = request.json["verification_code"]
 
     for data in awaitingVerification:
@@ -469,13 +480,12 @@ def verify_email_code():
 
 @app.route("/privacy_policy")
 def policy():
+    """ Servers the privacy-policy webpage """
     with open(f"static/{deviceType(request)}/privacy_policy.html", "r") as f:
         return f.read()
 
 
 def getLocalIp():
-    import socket
-
     return socket.gethostbyname(socket.gethostname())
 
 
