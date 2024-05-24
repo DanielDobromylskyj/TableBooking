@@ -7,6 +7,7 @@ import secrets
 import time
 import bcrypt
 import socket
+import sqlite3
 
 import viewBookings
 import emailHandler
@@ -43,12 +44,6 @@ def deviceType(inboundRequest):
 
 awaitingVerification = []
 passwordResetting = {}
-
-with open("users.txt", "r") as fr:
-    users = {x.split(",")[0]: x.split(",")[1] for x in fr.read().split("\n") if x != ""}
-
-with open("admins.txt", "r") as fr:
-    adminEmails = fr.read().split("\n")
 
 
 def Hash(password):
@@ -87,32 +82,61 @@ def PasswordSecure(password):
     return True
 
 
-def updatePassword(email, password):
-    global users
-    users[email] = password
+def isAdmin(email):
+    user_database = sqlite3.connect('user_data.db')
+    c = user_database.cursor()
+    c.execute('SELECT email FROM teachers WHERE email = ?', (email,))
+    result = c.fetchone()
+    c.close()
+    user_database.close()
+    return result
 
-    with open("users.txt", "w") as usersFile:
-        usersFile.write("\n".join([
-            f"{email},{users[email]}" for email in users
-        ]) + "\n")
+
+def getAccountPasswordHash(email):
+    user_database = sqlite3.connect('user_data.db')
+    c = user_database.cursor()
+    c.execute('SELECT password_hash FROM users WHERE email = ?', (email,))
+    result = c.fetchone()
+    c.close()
+    user_database.close()
+    return result[0] if result is not None else None
+
+
+def accountExists(email):
+    user_database = sqlite3.connect('user_data.db')
+    c = user_database.cursor()
+    c.execute('SELECT password_hash FROM users WHERE email = ?', (email,))
+    result = c.fetchone()
+    c.close()
+    user_database.close()
+    return result is not None
+
+
+def updatePassword(email, password_hash):
+    user_database = sqlite3.connect('user_data.db')
+    c = user_database.cursor()
+    c.execute('UPDATE users SET password_hash = ? WHERE email = ?', (password_hash, email))
+    user_database.commit()
+    c.close()
+    user_database.close()
 
 
 def deleteAccount(email):
-    global users
-    users.pop(email)
+    user_database = sqlite3.connect('user_data.db')
+    c = user_database.cursor()
+    c.execute('DELETE FROM users WHERE email = ?', (email,))
+    user_database.commit()
+    c.close()
+    user_database.close()
 
-    with open("users.txt", "w") as usersFile:
-        usersFile.write("\n".join([
-            f"{email},{users[email]}" for email in users
-        ]) + "\n")
 
-
-def createAccount(email, password):
-    with open("users.txt", "a") as usersFile:
-        usersFile.write(f"{email},{password}\n")
-
-    global users
-    users[email] = password
+def createAccount(email, hashed_password):
+    user_database = sqlite3.connect('user_data.db')
+    c = user_database.cursor()
+    c.execute('INSERT INTO users (email, password_hash) VALUES (?, ?)', (email, hashed_password))
+    user_database.commit()
+    c.close()
+    user_database.close()
 
 
 class User(UserMixin):
@@ -151,7 +175,7 @@ def login():
     password = args['password']
 
     # Check if username exists and password is correct
-    if username in users and verifyPassword(password, users[username]):
+    if accountExists(username) and verifyPassword(password, getAccountPasswordHash(username)):
         user = User()
         user.id = username
         login_user(user)
@@ -276,7 +300,7 @@ def deleteMyAccount():
 @login_required
 def dashboard():
     """ Return the respective webpage for the student/teacher dashboard """
-    if current_user.id in adminEmails:
+    if isAdmin(current_user.id):
         with open(f"static/{deviceType(request)}/teacherPortal.html", "r") as f:
             return f.read()
 
@@ -288,7 +312,7 @@ def dashboard():
 @login_required
 def advancedDashboard():
     """ Returns advanced table booking view webpage if user is a valid teacher """
-    if current_user.id in adminEmails:
+    if isAdmin(current_user.id):
         with open(f"static/{deviceType(request)}/advancedEdit.html", "r") as f:
             return f.read()
 
@@ -297,7 +321,7 @@ def advancedDashboard():
 @login_required
 def searchDB():
     """ Returns results of a search of all table bookings in the database if authorised by a valid admin / teacher """
-    if current_user.id in adminEmails:
+    if isAdmin(current_user.id):
         return viewBookings.bookings.SearchDatabase(request.args)
     return {"message": "You do not have permission to use this api"}
 
@@ -306,7 +330,7 @@ def searchDB():
 @login_required
 def deleteFromDB():
     """ Deletes a given booking from the data abase if authorised by a valid admin / teacher """
-    if current_user.id in adminEmails:
+    if isAdmin(current_user.id):
         return viewBookings.bookings.DeleteFromDatabase(request.args)
     return {"message": "You do not have permission to use this api"}
 
@@ -315,7 +339,7 @@ def deleteFromDB():
 @login_required
 def downloadSearch():
     """ Creates a file for downloading that contains table booking information from the last search """
-    if current_user.id in adminEmails:
+    if isAdmin(current_user.id):
         response = viewBookings.bookings.downloadSearch(request.args)
         if type(response) is str:
             return send_file(response, as_attachment=True)
@@ -336,7 +360,7 @@ def account():
 @login_required
 def periodOverview():
     """ If a teach, Return all booking data for the given date/period """
-    if current_user.id in adminEmails:
+    if isAdmin(current_user.id):
         return viewBookings.bookings.getTeacherPeriodData(request.json["date"], request.json["period"])
     return {}
 
@@ -428,7 +452,7 @@ def register():
             return {'message': 'Invalid email address. Only email addresses ending with "@utcncst.org" are allowed.'}
 
         # Check for the email in our system
-        if email in users.keys():
+        if accountExists(email):
             return {'message': 'Email already in use.'}
 
         result = PasswordSecure(password)

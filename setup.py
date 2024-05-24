@@ -1,4 +1,5 @@
 import os
+import sqlite3
 
 
 def setup():
@@ -49,14 +50,44 @@ def cloneFile(src, dst):
         f.write(byteData)
 
 def createUsers():
-    if os.path.exists('users.txt') == False:
-        open("users.txt", "w").close()
+    conn = sqlite3.connect('user_data.db')
+    c = conn.cursor()
+
+    # Create a table for storing user data
+    c.execute('''
+    CREATE TABLE IF NOT EXISTS users (
+        email TEXT PRIMARY KEY,
+        password_hash TEXT
+    )
+    ''')
+
+    conn.commit()
+    conn.close()
+
 
 def createAdmins(emails):
-    with open('admins.txt', "w") as f:
-        f.write('\n'.join(emails))
+    conn = sqlite3.connect('user_data.db')
+    c = conn.cursor()
 
+    # Create a table for storing user data
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS teachers (
+            email TEXT PRIMARY KEY
+        )
+        ''')
+    conn.commit()
 
+    for email in emails:
+        email = email.strip()
+
+        if email:  # Ensure the email is not empty
+            try:
+                c.execute('INSERT INTO teachers (email) VALUES (?)', (email,))
+                conn.commit()
+            except sqlite3.IntegrityError:
+                print(f"Email {email} already exists in the database. Duplicate?")
+
+    conn.close()
 
 
 
